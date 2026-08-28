@@ -2,24 +2,32 @@
 
 #include <QGraphicsItem>
 
-#include "Pin.h"
+#include "PinItem.h"
 
 class PinItem;
 class MainView;
 
-class SchemeItem : public QGraphicsItem {
 
+
+class ComponentItem : public QGraphicsItem {
 protected:
-    // get pins (pos)
-    virtual std::vector<PinItem*> pins() = 0;
+    // shows after drill-down to that scene; makes item drillable
+    QGraphicsScene *interior_ = nullptr;
 
-    // paint pins
+    std::vector<PinItem*> pins_;
+
     void paintPins(QPainter* painter) {
         for (PinItem* pin : pins()) {
             pin->paint(painter, {}, nullptr);
         }
     }
 
-    friend MainView;
+public:
+    const QGraphicsScene* interior() const {
+        return interior_;
+    }
 
+    std::vector<PinItem*> pins() const {
+        return pins_;
+    }
 };

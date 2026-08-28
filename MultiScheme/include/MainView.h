@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QGraphicsView>
-#include <SchemeItem.h>
 #include <stack>
+#include <ComponentItem.h>
 
 class MainView : public QGraphicsView {
     QGraphicsScene *_main_scene{};
@@ -10,7 +10,7 @@ class MainView : public QGraphicsView {
     std::stack<QGraphicsScene*> _drill_stack;
 
 
-    void drill_down(const SchemeItem *scheme);
+    void drill_down(const ComponentItem *scheme);
     void drill_up();
 
 protected:
