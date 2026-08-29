@@ -2,14 +2,14 @@
 #include <QMouseEvent>
 
 
-void MainView::drill_down(const SchemeItem *scheme) {
+void MainView::drill_down(const ComponentItem *scheme) {
 
-    if (scheme->_interior) {
+    if (scheme->interior_) {
         qDebug() << "make drill down";
         // push it to stack for drill_up in future
         _drill_stack.push(scene());
 
-        setScene(scheme->_interior);
+        setScene(scheme->interior_);
     }
 }
 
@@ -26,7 +26,7 @@ void MainView::mouseDoubleClickEvent(QMouseEvent *event){
 
     QGraphicsItem *selected_item = itemAt(event->pos());
 
-    if (const auto *scheme = dynamic_cast<SchemeItem*>(selected_item)) {
+    if (const auto *scheme = dynamic_cast<ComponentItem*>(selected_item)) {
         drill_down(scheme);
     }
 }
