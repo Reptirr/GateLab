@@ -11,12 +11,10 @@ protected:
     // must be on same scenes
     std::vector<PinItem*> pins_;
 
+    QPointF lines_center_{};
+
 public:
     WireItem() = default;
-
-    explicit WireItem(const std::vector<PinItem*> &pins) {
-        pins_ = pins;
-    }
 
     QRectF boundingRect() const override {
         return QRectF();
@@ -24,23 +22,23 @@ public:
 
     void addPin(PinItem* pin) {
         pins_.push_back(pin);
-    }
 
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
-        // it`s need 2 pins to draw
-        if (pins_.size() < 2) return;
+        // центр пина в его локальных координатах -> в координаты сцены
+        QPointF pinCenterScene = pin->mapToScene(pin->boundingRect().center());
 
-        // make line between pins 0, 1
-        auto *first_line = new QGraphicsLineItem( QLineF(pins_[0]->pos(), pins_[1]->pos()), this );
-        first_line->setParentItem(this);
-        scene()->addItem(first_line);
+        // из сцены -> в координаты this (т.к. линия - дочерний item this)
+        QPointF pinCenterLocal = mapFromScene(pinCenterScene);
 
-        // make other lines from first line center
-        for (int i = 2; i < pins_.size(); i++) {
-            auto *line = new QGraphicsLineItem( QLineF(first_line->line().center(), pins_[i]->pos()), this );
-            line->setParentItem(this);
-            scene()->addItem(line);
+        if (pins_.size() == 2) {
+            QPointF firstPinCenterScene = pins_[0]->mapToScene(pins_[0]->boundingRect().center());
+            QPointF firstPinCenterLocal = mapFromScene(firstPinCenterScene);
+
+            auto *first_line = new QGraphicsLineItem(QLineF(firstPinCenterLocal, pinCenterLocal), this);
+            lines_center_ = first_line->line().center();
+        } else if (pins_.size() > 2) {
+            auto *new_line = new QGraphicsLineItem(QLineF(lines_center_, pinCenterLocal), this);
         }
-
     }
+
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {}
 };

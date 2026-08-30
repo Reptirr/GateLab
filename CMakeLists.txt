@@ -28,6 +28,7 @@ add_library(GateLabCore STATIC
         GateLogic/include/IPinFul.h
         MultiScheme/include/ComponentItem.h
         MultiScheme/include/WireItem.h
+        MultiScheme/include/TransistorItem.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

@@ -16,18 +16,12 @@ protected:
 
     std::vector<PinItem*> pins_;
 
-    void paintPins(QPainter* painter) {
-        for (PinItem* pin : pins()) {
-            pin->paint(painter, {}, nullptr);
-        }
-    }
-
 public:
-    const QGraphicsScene* interior() const {
+    QGraphicsScene* interior() {
         return interior_;
     }
 
-    std::vector<PinItem*> pins() const {
+    const std::vector<PinItem*>& pins() {
         return pins_;
     }
 };

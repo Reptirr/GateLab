@@ -12,9 +12,25 @@ public:
         return QRectF{0, 0, width_, height_};
     };
 
+    PinItem(const qreal x, const qreal y, QGraphicsItem* owner) {
+        qreal owner_x = owner->pos().x();
+        qreal owner_y = owner->pos().y();
+
+        setPos(
+            x + owner_x,
+            y + owner_y
+        );
+    }
     PinItem() = default;
-    PinItem(const qreal x, const qreal y) {
-        setPos(x, y);
+
+    void setRelativePos(qreal x, qreal y, QGraphicsItem* owner) {
+        qreal owner_x = owner->pos().x();
+        qreal owner_y = owner->pos().y();
+
+        setPos(
+            x + owner_x,
+            y + owner_y
+        );
     }
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
