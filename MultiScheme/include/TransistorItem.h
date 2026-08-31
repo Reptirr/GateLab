@@ -44,12 +44,16 @@ public:
 
     QRectF boundingRect() const override {
         return QRectF{0, 0, width_, height_};
-    };
+    }
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
         painter->drawRect(0, 0, width_, height_);
 
         QRectF rect(0, 0, width_, height_);
         painter->drawText(rect, Qt::AlignCenter, "Transistor");
+    }
+
+    int type() const override {
+        return TransistorType;
     };
 };

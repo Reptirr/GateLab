@@ -18,8 +18,8 @@ class MainView : public QGraphicsView {
     QPointF getCursorPosition() const;
 
 signals:
-    void key_T_press(QPointF);
-    void pin_select(PinItem*);
+    void keyPress(QKeyEvent *, QPointF);
+    void mouseDoubleClick(QMouseEvent *);
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override; // for drill-down
