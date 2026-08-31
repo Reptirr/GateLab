@@ -1,16 +1,19 @@
 #pragma once
 #include <QGraphicsItem>
 #include <qpainter.h>
+#include <UIConstants.h>
 
 class PinItem : public QGraphicsItem {
 
-    qreal width_ = 10;
-    qreal height_ = 10;
+    qreal width_ = 25;
+    qreal height_ = 25;
 
 public:
     QRectF boundingRect() const override {
         return QRectF{0, 0, width_, height_};
-    };
+    }
+
+
 
     PinItem(const qreal x, const qreal y, QGraphicsItem* owner) {
         qreal owner_x = owner->pos().x();
@@ -40,5 +43,9 @@ public:
         painter->setPen(pen);
 
         painter->drawRect(0, 0, width_, height_);
-    };
+    }
+
+    int type() const override {
+        return PinType;
+    }
 };

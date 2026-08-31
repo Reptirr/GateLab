@@ -31,46 +31,11 @@ QPointF MainView::getCursorPosition() const {
 void MainView::mouseDoubleClickEvent(QMouseEvent *event) {
     qDebug() << "Get double click event";
 
-    QGraphicsItem *selected_item = itemAt(event->pos());
-
-    if (auto *scheme = dynamic_cast<ComponentItem*>(selected_item)) {
-        drill_down(scheme);
-    }
+    emit mouseDoubleClick(event->clone());
 }
 
 void MainView::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Escape) {
-        qDebug() << "Get escape press event";
-
-        drill_up();
-    } else if (event->key() == Qt::Key_T) {
-        QPointF scenePos = getCursorPosition();
-
-        if ( !( 0 <= scenePos.x() && scenePos.x() < scene()->width() ) ) return;
-        if ( !( 0 <= scenePos.y() && scenePos.y() < scene()->height() ) ) return;
-
-        qDebug() << "Get t press event at" << scenePos;
-
-        emit key_T_press(scenePos);
-    } else if (event->key() == Qt::Key_W) {
-        QPointF scenePos = getCursorPosition();
-
-        if ( !( 0 <= scenePos.x() && scenePos.x() < scene()->width() ) ) return;
-        if ( !( 0 <= scenePos.y() && scenePos.y() < scene()->height() ) ) return;
-
-        qDebug() << "Get w press event at" << scenePos;
-
-        QList<QGraphicsItem*> items = scene()->items(scenePos);
-
-        for (auto *item : items) {
-            if (auto pin = qgraphicsitem_cast<PinItem*>(item)) {
-                emit pin_select(pin);
-                break;
-            }
-        }
-    }
-
-
+    emit keyPress(event->clone(), getCursorPosition());
 }
 
 void MainView::resizeEvent(QResizeEvent *event) {

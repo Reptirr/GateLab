@@ -29,6 +29,9 @@ add_library(GateLabCore STATIC
         MultiScheme/include/ComponentItem.h
         MultiScheme/include/WireItem.h
         MultiScheme/include/TransistorItem.h
+        Controller/src/InputMapper.cpp
+        Controller/include/InputMapper.h
+        MultiScheme/include/UIConstants.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
@@ -45,6 +48,15 @@ target_include_directories(GateLabCore PUBLIC
 
 add_executable(GateLab main.cpp)
 target_link_libraries(GateLab PRIVATE GateLabCore)
+
+target_link_options(GateLabCore PRIVATE -fuse-ld=lld)
+target_precompile_headers(GateLab PRIVATE
+        <QWidget>
+        <QObject>
+        <QString>
+        <QGraphicsScene>
+        <QGraphicsItem>
+)
 
 enable_testing()
 add_subdirectory(tests)

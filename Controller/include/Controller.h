@@ -1,4 +1,5 @@
 #pragma once
+#include <InputMapper.h>
 #include <LogicPin.h>
 #include <LogicTransistor.h>
 #include <LogicWire.h>
@@ -19,6 +20,7 @@ class Controller : public QObject {
     Q_OBJECT
 
     MainView *main_view_{};
+    InputMapper *input_mapper_;
 
     std::unordered_map<PinItem*, LogicPin*> pins_;
     std::unordered_map<WireItem*, LogicWire*> wires_;
@@ -26,10 +28,26 @@ class Controller : public QObject {
 
     std::vector<ComponentItem*> drillable_components_;
 
+    void initConnects() {
+        // MainView -> InputMapper
+        connect(main_view_, &MainView::keyPress,
+                input_mapper_, &InputMapper::onKeyPress);
+        connect(main_view_, &MainView::mouseDoubleClick,
+                input_mapper_, &InputMapper::onMouseDoubleClick);
 
+        // InputMapper -> Controller
+        connect(input_mapper_, &InputMapper::drillDownRequest, // drill-down
+                this, &Controller::onDrillDownRequest);
+        connect(input_mapper_, &InputMapper::drillUpRequest, // drill-up
+                this, &Controller::onDrillUpRequest);
+        connect(input_mapper_, &InputMapper::transistorCreateRequest, // transistor-create
+                this, &Controller::onTransistorCreateRequest);
+        connect(input_mapper_, &InputMapper::wireCreateRequest, // wire-create
+                this, &Controller::onWireCreateRequest);
+    }
 
 public slots:
-    void onCreateTransistorRequest(QPointF pos) {
+    void onTransistorCreateRequest(QPointF pos) {
         auto size = TransistorItem{{0,0}}.boundingRect().size();
 
         pos.setX(pos.x() - size.width()/2);
@@ -42,11 +60,18 @@ public slots:
         addWire(pin1, pin2);
     }
 
+    void onDrillDownRequest(QGraphicsScene *scene) {
+        main_view_->setScene(scene);
+        input_mapper_->setScene(scene);
+    }
+    void onDrillUpRequest(QGraphicsScene *scene) {
+        main_view_->setScene(scene);
+        input_mapper_->setScene(scene);
+    }
 
 public:
-    Controller() {
-        main_view_ = new MainView(new QGraphicsScene());
-
+    Controller() : main_view_(new MainView(new QGraphicsScene())), input_mapper_(new InputMapper(main_view_->scene())) {
+        initConnects();
     }
 
     MainView* mainView() {
@@ -138,5 +163,9 @@ public:
         pins_.insert({pin_items[0], left});
         pins_.insert({pin_items[1], top});
         pins_.insert({pin_items[2], right});
+    }
+
+    ~Controller() {
+        delete input_mapper_;
     }
 };
