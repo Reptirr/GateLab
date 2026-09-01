@@ -14,7 +14,7 @@ void LogicWire::handle() {
 
     if (signal) {
         for (auto *pin: pins_) {
-            pin->setSignal(true);
+            pin->setSignalByWire(true);
         }
     }
 }
@@ -22,5 +22,13 @@ void LogicWire::handle() {
 void LogicWire::addPin(LogicPin *pin) {
     if (std::find(pins_.begin(), pins_.end(), pin) == pins_.end()) {
         pins_.push_back(pin);
+    }
+}
+
+void LogicWire::removePin(LogicPin *removedPin) {
+    auto remove = std::find(pins_.begin(), pins_.end(), removedPin);
+
+    if (remove != pins_.end()) {
+        pins_.erase(remove);
     }
 }

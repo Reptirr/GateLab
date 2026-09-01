@@ -20,18 +20,17 @@ add_library(GateLabCore STATIC
         MultiScheme/include/PinItem.h
         Controller/include/BiMap.h
         Controller/include/Controller.h
-        GateLogic/include/LogicTransistor.h
         GateLogic/include/LogicPin.h
         GateLogic/include/LogicWire.h
         GateLogic/src/LogicPin.cpp
         GateLogic/src/LogicWire.cpp
-        GateLogic/include/IPinFul.h
         MultiScheme/include/ComponentItem.h
         MultiScheme/include/WireItem.h
-        MultiScheme/include/TransistorItem.h
         Controller/src/InputMapper.cpp
         Controller/include/InputMapper.h
         MultiScheme/include/UIConstants.h
+        GateLogic/include/instant/LogicSource.h
+        MultiScheme/include/instant/SourceItem.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

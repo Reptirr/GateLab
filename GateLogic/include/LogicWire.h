@@ -1,15 +1,16 @@
 #pragma once
 
-#include <IPinFul.h>
 #include <vector>
 
 class LogicPin;
 
-class LogicWire : public IPinFul {
+class LogicWire {
     std::vector<LogicPin*> pins_;
 
 public:
-    void handle() override;
+    void handle();
 
     void addPin(LogicPin*);
+
+    void removePin(LogicPin *removedPin);
 };

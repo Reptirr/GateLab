@@ -2,6 +2,7 @@
 
 #include <vector>
 
+class LogicComponent;
 class IPinFul;
 class LogicWire;
 
@@ -9,12 +10,21 @@ class LogicWire;
 class LogicPin {
     bool signal_ = false;
 
-    std::vector<IPinFul*> handlers_;
+    // pin can has connections:
+    // wire - pin - wire
+    // wire - pin - transistor
+
+    LogicWire* conn_{}; // only for wire
+    LogicComponent* owner_{}; // for transistor or wire
 
 public:
+    LogicPin(LogicComponent *);
+
     bool getSignal();
 
-    void setSignal(bool);
+    void setSignalByWire(bool);
+    void setSignalByOwner(bool);
 
-    void addHandler(IPinFul *handle);
+    void setWire(LogicWire*);
+    void removeWire();
 };

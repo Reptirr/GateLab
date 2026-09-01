@@ -1,24 +1,35 @@
-#include <algorithm>
+#include <LogicComponent.h>
 #include <LogicPin.h>
 #include <LogicWire.h>
 
-
-void LogicPin::setSignal(bool new_signal) {
-    if (signal_ == new_signal) return;
-
-    signal_ = new_signal;
-
-    for (auto *conn : handlers_) {
-        conn->handle();
-    }
+void LogicPin::setWire(LogicWire *external) {
+    conn_ = external;
 }
 
-void LogicPin::addHandler(IPinFul* handle) {
-    if (std::find(handlers_.begin(), handlers_.end(), handle) == handlers_.end()) {
-        handlers_.push_back(handle);
-    }
+void LogicPin::removeWire() {
+    conn_ = nullptr;
+}
+
+LogicPin::LogicPin(LogicComponent * owner) {
+    owner_ = owner;
 }
 
 bool LogicPin::getSignal() {
     return signal_;
+}
+
+void LogicPin::setSignalByWire(bool signal) {
+    if (signal_ == signal) return;
+
+    signal_ = signal;
+
+    owner_->handle();
+}
+
+void LogicPin::setSignalByOwner(bool signal) {
+    if (signal_ == signal) return;
+
+    signal_ = signal;
+
+    if (conn_ != nullptr) conn_->handle();
 }

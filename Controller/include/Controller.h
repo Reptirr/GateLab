@@ -1,14 +1,14 @@
 #pragma once
 #include <InputMapper.h>
 #include <LogicPin.h>
-#include <LogicTransistor.h>
 #include <LogicWire.h>
 #include <MainView.h>
 #include <PinItem.h>
-#include <TransistorItem.h>
+#include <../../MultiScheme/include/instant/TransistorItem.h>
 #include <unordered_map>
 #include <WireItem.h>
 #include <QObject>
+#include <instant/LogicTransistor.h>
 
 class LogicTransistor;
 class LogicWire;
@@ -24,7 +24,7 @@ class Controller : public QObject {
 
     std::unordered_map<PinItem*, LogicPin*> pins_;
     std::unordered_map<WireItem*, LogicWire*> wires_;
-    std::unordered_map<ComponentItem*, LogicTransistor*> black_box_components_;
+    std::unordered_map<ComponentItem*, LogicComponent*> black_box_components_;
 
     std::vector<ComponentItem*> drillable_components_;
 
@@ -54,6 +54,9 @@ public slots:
         pos.setY(pos.y() - size.height()/2);
 
         addTransistor(new TransistorItem(pos));
+    }
+    void onSourceCreateRequest(QPointF pos) {
+        auto size = SourceItem;
     }
 
     void onWireCreateRequest(PinItem *pin1, PinItem *pin2) {
@@ -105,8 +108,8 @@ public:
         // =========
 
         // add wire to pins in logic
-        pins_.at(pin1)->addHandler(wire_logic);
-        pins_.at(pin2)->addHandler(wire_logic);
+        pins_.at(pin1)->setWire(wire_logic);
+        pins_.at(pin2)->setWire(wire_logic);
 
         // add pins to wire in logic
         wire_logic->addPin(pins_.at(pin1));
@@ -134,7 +137,7 @@ public:
         main_view_->scene()->addItem(component);
 
         // get pins from component
-        auto &pin_items = component->pins();
+        std::vector<PinItem *> pin_items = component->pins();
 
         // add pins item to scene
         for (auto *pin : pin_items) {
@@ -147,14 +150,11 @@ public:
         // LOGIC
         // =========
 
-        // create logic pins
-        auto *left = new LogicPin();
-        auto *top = new LogicPin();
-        auto *right = new LogicPin();
-
         // create transistor
-        auto *transistor = new LogicTransistor(left, top, right);
+        auto *transistor = new LogicTransistor();
 
+        // get pins
+        auto [left, top, right] = transistor->pinsTuple();
 
         // add transistor to registry
         black_box_components_.insert({component, transistor});
