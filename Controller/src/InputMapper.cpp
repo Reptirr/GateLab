@@ -1,9 +1,19 @@
 #include <InputMapper.h>
 #include <qevent.h>
-#include <qgraphicsitem.h>
 #include <qgraphicsscene.h>
 #include <PinItem.h>
 #include <ComponentItem.h>
+#include <algorithm>
+#include <instant/TransistorItem.h>
+
+#define CONTAINS_VALUE(collection, value) \
+    (std::find(std::begin(collection), std::end(collection), (value)) != std::end(collection))
+
+#define CONTAINS_QTYPE(collection, Type) \
+    (std::find_if(std::begin(collection), std::end(collection), \
+        [](auto* item) { return qgraphicsitem_cast<Type*>(item) != nullptr; }) \
+        != std::end(collection))
+
 
 InputMapper::InputMapper(QGraphicsScene *scene) : scene_(scene) {}
 
@@ -12,6 +22,13 @@ void InputMapper::onKeyPress(QKeyEvent *keyEvent, QPointF mousePos) {
         // create transistor
         case Qt::Key_T: {
             emit transistorCreateRequest(mousePos);
+
+            break;
+        }
+
+        // create source
+        case Qt::Key_S: {
+            emit sourceCreateRequest(mousePos);
 
             break;
         }
@@ -45,6 +62,14 @@ void InputMapper::onKeyPress(QKeyEvent *keyEvent, QPointF mousePos) {
 
             emit drillUpRequest(next_scene);
             break;
+        }
+
+        // remove item
+        case Qt::Key_D: {
+            qDebug() << "Get d press";
+
+            auto *component = getItem<ComponentItem *>(mousePos);
+            emit componentRemoveRequest(component);
         }
 
         default: break;

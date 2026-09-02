@@ -1,8 +1,13 @@
 #pragma once
 #include <qgraphicsitem.h>
 
+
 enum {
+    // basic
     PinType = QGraphicsItem::UserType + 1,
-    TransistorType = QGraphicsItem::UserType + 2,
-    WireType = QGraphicsItem::UserType + 3
+    WireType = QGraphicsItem::UserType + 2,
+
+    // derived
+    TransistorType = QGraphicsItem::UserType + 3,
+    SourceType = QGraphicsItem::UserType + 4
 };

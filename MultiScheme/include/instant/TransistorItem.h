@@ -55,5 +55,5 @@ public:
 
     int type() const override {
         return TransistorType;
-    };
+    }
 };

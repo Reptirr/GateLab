@@ -1,6 +1,7 @@
 #include <LogicPin.h>
 #include <LogicWire.h>
 #include <gtest/gtest.h>
+#include <instant/LogicSource.h>
 #include <instant/LogicTransistor.h>
 
 class ComponentMoc : LogicComponent {
@@ -42,4 +43,16 @@ TEST(Transistor, TransistorWork) {
     top->setSignalByWire(true);
 
     ASSERT_TRUE(right->getSignal());
+}
+
+TEST(Source, SourceWork) {
+    auto *source = new LogicSource();
+
+    auto pin = source->pins()[0];
+
+    ASSERT_TRUE(pin->getSignal());
+
+    pin->setSignalByWire(false);
+
+    ASSERT_TRUE(pin->getSignal());
 }

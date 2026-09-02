@@ -6,9 +6,34 @@ class SourceItem : public ComponentItem {
     qreal height_ = 75;
 
 public:
-    QRectF boundingRect() const override {
-        return QRectF{0, 0, };
-    };
+    SourceItem(QPointF pos) {
+        setPos(pos);
 
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+        auto *pin = new PinItem{};
+
+        auto y_center = (height_ - pin->boundingRect().width()) / 2;
+
+        pin->setRelativePos(
+            width_ - pin->boundingRect().width()/2,
+            y_center,
+            this
+        );
+
+        pins_.push_back(pin);
+    }
+
+    QRectF boundingRect() const override {
+        return QRectF{0, 0, width_, height_};
+    }
+
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
+        painter->drawRect(0, 0, width_, height_);
+
+        QRectF rect(0, 0, width_, height_);
+        painter->drawText(rect, Qt::AlignCenter, "Source");
+    }
+
+    int type() const override {
+        return SourceType;
+    }
 };

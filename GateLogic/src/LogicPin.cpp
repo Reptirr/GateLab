@@ -12,9 +12,10 @@ void LogicPin::removeWire() {
 
 LogicPin::LogicPin(LogicComponent * owner) {
     owner_ = owner;
+    conn_ = nullptr;
 }
 
-bool LogicPin::getSignal() {
+bool LogicPin::getSignal() const {
     return signal_;
 }
 
@@ -32,4 +33,9 @@ void LogicPin::setSignalByOwner(bool signal) {
     signal_ = signal;
 
     if (conn_ != nullptr) conn_->handle();
+}
+
+LogicPin::~LogicPin() {
+    if (conn_ != nullptr)
+        conn_->removePin(this);
 }

@@ -7,20 +7,19 @@ class LogicPin;
 
 
 class LogicTransistor : public LogicComponent {
-    LogicPin* left_pin_{};
-    LogicPin* top_pin_{};
-    LogicPin* right_pin_{};
+    LogicPin* left_pin_;
+    LogicPin* top_pin_;
+    LogicPin* right_pin_;
 
 public:
-    LogicTransistor() {
-        left_pin_ = new LogicPin(this);
-        top_pin_ = new LogicPin(this);
-        right_pin_ = new LogicPin(this);
-    }
+    LogicTransistor() :
+    LogicComponent({new LogicPin(this), new LogicPin(this), new LogicPin(this)}),
+    left_pin_(pins_[0]),
+    top_pin_(pins_[1]),
+    right_pin_(pins_[2])
+    {
 
-    std::vector<LogicPin *> pins() override {
-        return { left_pin_, top_pin_, right_pin_ };
-    };
+    }
 
     std::tuple<LogicPin*, LogicPin*, LogicPin*> pinsTuple() {
         return { left_pin_, top_pin_, right_pin_ };

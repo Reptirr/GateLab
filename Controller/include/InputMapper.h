@@ -5,6 +5,7 @@
 #include <qpoint.h>
 #include <stack>
 
+class WireItem;
 class ComponentItem;
 class QGraphicsScene;
 class PinItem;
@@ -40,11 +41,15 @@ public slots:
     void setScene(QGraphicsScene *);
 
 signals:
-    void transistorCreateRequest(QPointF);
-    void wireCreateRequest(PinItem *, PinItem *);
     void drillDownRequest(QGraphicsScene *);
     void drillUpRequest(QGraphicsScene *);
 
+    // create requests
+    void wireCreateRequest(PinItem *, PinItem *);
+    void transistorCreateRequest(QPointF);
+    void sourceCreateRequest(QPointF);
 
+    // delete request
+    void componentRemoveRequest(ComponentItem *);
 };
 

@@ -13,6 +13,21 @@ protected:
 
     QPointF lines_center_{};
 
+private:
+    void setColorBySignal(bool signal) {
+        auto color = QColorConstants::Black;
+
+        if (signal) color = QColorConstants::Green;
+
+        for (auto *item : childItems()) {
+            if (auto *line = qgraphicsitem_cast<QGraphicsLineItem *>(item)) {
+                line->setPen(QPen{color});
+            }
+        }
+    }
+
+    friend LogicWire;
+
 public:
     WireItem() = default;
 
