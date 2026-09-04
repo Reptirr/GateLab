@@ -26,12 +26,12 @@ public:
     }
 
     void handle() override {
-        qDebug() << "top_pin_: " << static_cast<void*>(top_pin_);
-
         // NOTE: по сути транзистор = AND по механике сигналов, следовательно можно исплоьзовать && вместо условий
         right_pin_->setSignalByOwner(
-            top_pin_->getSignal() &&
-            left_pin_->getSignal()
+            (
+                top_pin_->getSignal() &&
+                left_pin_->getSignal()
+            ) || right_pin_->getSignal() // if the right_pin_ is true we will not change its signal to false
         );
     }
 };
