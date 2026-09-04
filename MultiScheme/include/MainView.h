@@ -20,10 +20,12 @@ class MainView : public QGraphicsView {
 signals:
     void keyPress(QKeyEvent *, QPointF);
     void mouseDoubleClick(QMouseEvent *);
+    void mousePress(QMouseEvent *);
 
-protected:
+public:
     void mouseDoubleClickEvent(QMouseEvent *event) override; // for drill-down
     void keyPressEvent(QKeyEvent *event) override; // for creating & drill-down
+    void mousePressEvent(QMouseEvent *event) override; // for interactive with items
 
     void resizeEvent(QResizeEvent *event) override; // for scene rect resize
 

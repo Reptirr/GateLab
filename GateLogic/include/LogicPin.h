@@ -18,13 +18,20 @@ class LogicPin {
 
 public:
     LogicPin(LogicComponent *);
-    ~LogicPin();
 
 
     bool getSignal() const;
 
     void setSignalByWire(bool);
     void setSignalByOwner(bool);
+
+    LogicComponent *owner() const {
+        return owner_;
+    }
+    // returns nullptr if there is no wire
+    LogicWire *wire() const {
+        return conn_;
+    }
 
     void setWire(LogicWire*);
     void removeWire();

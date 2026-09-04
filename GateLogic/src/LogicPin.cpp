@@ -4,6 +4,7 @@
 
 void LogicPin::setWire(LogicWire *external) {
     conn_ = external;
+    conn_->handle();
 }
 
 void LogicPin::removeWire() {
@@ -33,9 +34,4 @@ void LogicPin::setSignalByOwner(bool signal) {
     signal_ = signal;
 
     if (conn_ != nullptr) conn_->handle();
-}
-
-LogicPin::~LogicPin() {
-    if (conn_ != nullptr)
-        conn_->removePin(this);
 }

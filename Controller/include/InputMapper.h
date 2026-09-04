@@ -5,6 +5,8 @@
 #include <qpoint.h>
 #include <stack>
 
+class MainView;
+class Controller;
 class WireItem;
 class ComponentItem;
 class QGraphicsScene;
@@ -15,6 +17,7 @@ class QKeyEvent;
 class InputMapper : public QObject {
     Q_OBJECT
 
+    MainView *view_{};
     QGraphicsScene *scene_;
 
     PinItem *selected_pin_ = nullptr;
@@ -27,16 +30,16 @@ class InputMapper : public QObject {
                 return res;
             }
         }
-
         return nullptr;
     }
 
 public:
-    explicit InputMapper(QGraphicsScene *);
+    InputMapper(QGraphicsScene *scene, Controller *controller);
 
 public slots:
     void onKeyPress(QKeyEvent *, QPointF );
     void onMouseDoubleClick(QMouseEvent *);
+    void onMousePress(QMouseEvent *);
 
     void setScene(QGraphicsScene *);
 

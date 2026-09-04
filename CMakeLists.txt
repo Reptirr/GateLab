@@ -31,6 +31,7 @@ add_library(GateLabCore STATIC
         MultiScheme/include/UIConstants.h
         GateLogic/include/instant/LogicSource.h
         MultiScheme/include/instant/SourceItem.h
+        MultiScheme/src/WireItem.cpp
 )
 
 target_link_libraries(GateLabCore PUBLIC

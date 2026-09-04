@@ -4,6 +4,7 @@
 #include <PinItem.h>
 #include <ComponentItem.h>
 #include <algorithm>
+#include <Controller.h>
 #include <instant/TransistorItem.h>
 
 #define CONTAINS_VALUE(collection, value) \
@@ -15,7 +16,9 @@
         != std::end(collection))
 
 
-InputMapper::InputMapper(QGraphicsScene *scene) : scene_(scene) {}
+InputMapper::InputMapper(QGraphicsScene *scene, Controller *controller) : scene_(scene) {
+    view_ = dynamic_cast<MainView *>(scene->views().at(0));
+}
 
 void InputMapper::onKeyPress(QKeyEvent *keyEvent, QPointF mousePos) {
     switch (keyEvent->key()) {
@@ -83,6 +86,10 @@ void InputMapper::onMouseDoubleClick(QMouseEvent *event) {
     drill_stack_.emplace(scene_);
 
     emit drillDownRequest(component->interior());
+}
+
+void InputMapper::onMousePress(QMouseEvent *e) {
+    view_->mousePressEvent(e->clone());
 }
 
 void InputMapper::setScene(QGraphicsScene *scene) {

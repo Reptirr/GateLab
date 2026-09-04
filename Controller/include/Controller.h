@@ -1,10 +1,11 @@
 #pragma once
+#include <BiMap.h>
 #include <InputMapper.h>
 #include <LogicPin.h>
 #include <LogicWire.h>
 #include <MainView.h>
 #include <PinItem.h>
-#include <../../MultiScheme/include/instant/TransistorItem.h>
+#include <instant/TransistorItem.h>
 #include <unordered_map>
 #include <WireItem.h>
 #include <QObject>
@@ -23,7 +24,7 @@ class LogicPin;
  * Pin has: owner, wire
  * Wire has: pins and item(color changing)
  *
- * Component deleting his pins; pin remove himself in wire;
+ * Controller working about remove all from all
  *
  * Wire does not delete anything
  *
@@ -35,9 +36,9 @@ class Controller : public QObject {
     MainView *main_view_{};
     InputMapper *input_mapper_;
 
-    std::unordered_map<PinItem*, LogicPin*> pins_;
+    std::unordered_map<PinItem*, LogicPin*> pins_; // for wire creating
     std::unordered_map<WireItem*, LogicWire*> wires_;
-    std::unordered_map<ComponentItem*, LogicComponent*> black_box_components_;
+    std::unordered_map<ComponentItem*, LogicComponent*> black_box_components_; // for component removing
 
     std::set<ComponentItem*> drillable_components_;
 
@@ -82,7 +83,7 @@ public slots:
     }
 
     void onWireCreateRequest(PinItem *pin1, PinItem *pin2) {
-        addWire(pin1, pin2);
+        addWire({pin1, pin2});
     }
 
     void onComponentRemoveRequest(ComponentItem *component) {
@@ -99,7 +100,7 @@ public slots:
     }
 
 public:
-    Controller() : main_view_(new MainView(new QGraphicsScene())), input_mapper_(new InputMapper(main_view_->scene())) {
+    Controller() : main_view_(new MainView(new QGraphicsScene())), input_mapper_(new InputMapper(main_view_->scene(), this)) {
         initConnects();
     }
 
@@ -107,43 +108,45 @@ public:
         return main_view_;
     }
 
-    void addWire(PinItem* pin1, PinItem* pin2) {
-        // pins must exist, be registered and share the same (non-null) scene
-        if (!pin1 || !pin2) return;
-        if (!pins_.contains(pin1) || !pins_.contains(pin2)) return;
-        if (!pin1->scene() || pin1->scene() != pin2->scene()) return;
+    void addWire(std::vector<PinItem *> pin_items) {
+        // pins must have no wire
+        for (const auto *pin_item : pin_items)
+            if (pin_item->wire())
+                return;
 
-        // make wire
-        auto *wire_item = new WireItem();
-        auto *wire_logic = new LogicWire(wire_item);
+        // get logic_pins
+        std::vector<LogicPin *> logic_pins{};
+        for (auto *pin_item : pin_items)
+            if (auto it = pins_.extract(pin_item))
+                logic_pins.push_back(it.mapped());
+            else
+                return; // there is no recording of that pin_item
 
-        // =========
-        // UI
-        // =========
+        // create ui, logic wire
+        auto *wire_item = new WireItem{};
+        auto *logic_wire = new LogicWire{wire_item};
 
-        // add pins to item
-        wire_item->addPin(pin1);
-        wire_item->addPin(pin2);
+        // set connections in logic-side
+        for (auto *logic_pin : logic_pins) {
+            // set wire for pin (NOTE: we do it because pin need call wire if he was edited)
+            logic_pin->setWire(logic_wire);
 
-        // add wire to scene
-        qDebug() << "add item at addWire (add wire to scene)";
+            // set pin for wire (NOTE: we do it because wire need change pin signal)
+            logic_wire->addPin(logic_pin);
+        }
+
+        // set connections in ui-side
+        for (auto *pin_item : pin_items) {
+            // set wire for pin (NOTE: we do it because we need wire information at remove function)
+            pin_item->setWire(wire_item);
+
+            // set pin for wire (NOTE: we do it because wire builds its lines between pins)
+            wire_item->addPin(pin_item);
+        }
+
+        // add wire_item to scene
         main_view_->scene()->addItem(wire_item);
 
-        // =========
-        // LOGIC
-        // =========
-
-        // add wire to pins in logic
-        pins_.at(pin1)->setWire(wire_logic);
-        pins_.at(pin2)->setWire(wire_logic);
-
-        // add pins to wire in logic
-        wire_logic->addPin(pins_.at(pin1));
-        wire_logic->addPin(pins_.at(pin2));
-
-
-        // add wire to registry
-        wires_.insert({wire_item, wire_logic});
     }
 
     void addTransistor(TransistorItem* component) {
@@ -216,35 +219,56 @@ public:
         pins_.insert({pin_items[0], logic_pin});
     }
 
-    void removeComponent(ComponentItem *component) {
-        // firstly delete logic, after that delete ui because logic wire has the ptr to wire item
+    void removeComponent(ComponentItem *component_item) {
+        const auto logic_component = black_box_components_.at(component_item);
 
-        // =========
-        // Delete black-box component
-        // =========
+        // remove wire connections from logic(wire, pin)
+        for (auto *logic_pin : logic_component->pins()) {
+            const auto logic_wire = logic_pin->wire();
 
-        // ======
-        // LOGIC
-        // ======
+            if (logic_wire != nullptr) {
+                // remove the wire from pin
+                logic_pin->removeWire();
 
-        // also extract recording of component from registry
-        if (auto it = black_box_components_.extract(component); it)
-            delete it.mapped(); // delete all logic side of this component(pin and recording in wire)
-        else return;
-
-
-        // ======
-        // UI
-        // ======
-
-        component->scene()->removeItem(component);
-
-        // remove pins from registry
-        for (auto *pin : component->pins()) {
-            pins_.erase(pin);
+                // remove the pin from wire
+                logic_wire->removePin(logic_pin);
+            }
         }
 
-        delete component;
+        // after all we can delete logic component
+        delete logic_component;
+
+        // remove pin items from wire_items
+        for (auto *pin_item : component_item->pins()) {
+            auto *wire_item = pin_item->wire();
+
+            if (wire_item != nullptr) {
+                // remove the wire from pin
+                pin_item->removeWire();
+
+                // remove the pin from wire
+                wire_item->removePin(pin_item);
+
+                // remove wire_item from scene if it is empty
+                if (wire_item->empty())
+                    wire_item->scene()->removeItem(wire_item);
+            }
+
+            // remove pin_item from scene
+            pin_item->scene()->removeItem(pin_item);
+
+            // after all we can delete pin_item
+            delete pin_item;
+        }
+
+        // remove component_item from scene
+        component_item->scene()->removeItem(component_item);
+
+        // after all we can delete component_item
+        delete component_item;
+
+        // remove pair from map
+        black_box_components_.erase(component_item);
     }
 
     ~Controller() {

@@ -38,6 +38,10 @@ void MainView::keyPressEvent(QKeyEvent *event) {
     emit keyPress(event->clone(), getCursorPosition());
 }
 
+void MainView::mousePressEvent(QMouseEvent *event) {
+    emit mousePress(event->clone());
+}
+
 void MainView::resizeEvent(QResizeEvent *event) {
     QGraphicsView::resizeEvent(event);
 

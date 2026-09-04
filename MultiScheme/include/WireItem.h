@@ -1,63 +1,43 @@
 #pragma once
-#include <PinItem.h>
 #include <QGraphicsItem>
-#include <qpainter.h>
+#include <QPainter>
+#include <QLineF>
+#include <QPainterPath>
+#include <set>
+#include <unordered_map>
+
 
 class PinItem;
-
+class LogicWire;
 
 class WireItem : public QGraphicsItem {
 protected:
-    // must be on same scenes
-    std::vector<PinItem*> pins_;
-
+    std::set<PinItem *> pins_;
+    std::unordered_map<PinItem *, QLineF> lines_;
     QPointF lines_center_{};
 
 private:
-    void setColorBySignal(bool signal) {
-        auto color = QColorConstants::Black;
+    QColor color_ = QColorConstants::Black;
 
-        if (signal) color = QColorConstants::Green;
+    void setColorBySignal(bool signal);
 
-        for (auto *item : childItems()) {
-            if (auto *line = qgraphicsitem_cast<QGraphicsLineItem *>(item)) {
-                line->setPen(QPen{color});
-            }
-        }
-    }
+    // пересчитывает центр (среднее точек всех пинов) и перестраивает
+    // линии центр -> каждый пин
+    void rebuildLines();
 
     friend LogicWire;
 
 public:
     WireItem() = default;
 
-    QRectF boundingRect() const override {
-        return QRectF();
-    }
+    QPainterPath shape() const override;
+    QRectF boundingRect() const override;
 
-    void addPin(PinItem* pin) {
-        pins_.push_back(pin);
+    bool empty() const;
 
-        // центр пина в его локальных координатах -> в координаты сцены
-        QPointF pinCenterScene = pin->mapToScene(pin->boundingRect().center());
+    void addPin(PinItem *pin);
+    void removePin(PinItem *pin);
 
-        // из сцены -> в координаты this (т.к. линия - дочерний item this)
-        QPointF pinCenterLocal = mapFromScene(pinCenterScene);
-
-        if (pins_.size() == 2) {
-            QPointF firstPinCenterScene = pins_[0]->mapToScene(pins_[0]->boundingRect().center());
-            QPointF firstPinCenterLocal = mapFromScene(firstPinCenterScene);
-
-            auto *first_line = new QGraphicsLineItem(QLineF(firstPinCenterLocal, pinCenterLocal), this);
-            lines_center_ = first_line->line().center();
-        } else if (pins_.size() > 2) {
-            auto *new_line = new QGraphicsLineItem(QLineF(lines_center_, pinCenterLocal), this);
-        }
-    }
-
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {}
-
-    int type() const override {
-        return WireType;
-    }
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    int type() const override;
 };

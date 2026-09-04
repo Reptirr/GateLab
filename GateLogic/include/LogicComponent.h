@@ -16,8 +16,5 @@ public:
         return pins_;
     }
 
-    virtual ~LogicComponent() {
-        for (auto *pin : pins_)
-            delete pin;
-    }
+    virtual ~LogicComponent() {}
 };

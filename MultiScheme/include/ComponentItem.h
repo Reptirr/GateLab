@@ -21,12 +21,4 @@ public:
     std::vector<PinItem*> pins() {
         return pins_;
     }
-
-    ~ComponentItem() override {
-        for (auto *pin : pins_) {
-            if (pin->scene()) pin->scene()->removeItem(pin);
-            delete pin;
-            pin = nullptr;
-        }
-    }
 };

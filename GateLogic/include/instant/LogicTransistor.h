@@ -7,9 +7,9 @@ class LogicPin;
 
 
 class LogicTransistor : public LogicComponent {
-    LogicPin* left_pin_;
-    LogicPin* top_pin_;
-    LogicPin* right_pin_;
+    LogicPin* left_pin_{};
+    LogicPin* top_pin_{};
+    LogicPin* right_pin_{};
 
 public:
     LogicTransistor() :
@@ -26,7 +26,12 @@ public:
     }
 
     void handle() override {
+        qDebug() << "top_pin_: " << static_cast<void*>(top_pin_);
+
         // NOTE: по сути транзистор = AND по механике сигналов, следовательно можно исплоьзовать && вместо условий
-        right_pin_->setSignalByOwner( top_pin_->getSignal() && left_pin_->getSignal() );
+        right_pin_->setSignalByOwner(
+            top_pin_->getSignal() &&
+            left_pin_->getSignal()
+        );
     }
 };
