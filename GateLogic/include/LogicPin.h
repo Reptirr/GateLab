@@ -2,19 +2,39 @@
 
 #include <vector>
 
+class LogicComponent;
 class IPinFul;
 class LogicWire;
 
 
 class LogicPin {
-    bool signal_ = false;
+    bool signal_ = false; // signal from wire (NOTE: checks by owner and sets by wire)
+    bool own_signal_ = false; // signal from owner(NOTE: checks by wire and sets by owner)
 
-    std::vector<IPinFul*> handlers_;
+    // pin can has connections:
+    // wire - pin - transistor
+
+    LogicComponent* owner_{}; // only for component
+    LogicWire* conn_{}; // only for wire
 
 public:
-    bool getSignal();
+    LogicPin(LogicComponent *);
 
-    void setSignal(bool);
+    bool getSignal() const;
 
-    void addHandler(IPinFul *handle);
+    bool ownSignal() const;
+
+    void setSignalByWire(bool);
+    void setSignalByOwner(bool);
+
+    LogicComponent *owner() const {
+        return owner_;
+    }
+    // returns nullptr if there is no wire
+    LogicWire *wire() const {
+        return conn_;
+    }
+
+    void setWire(LogicWire*);
+    void removeWire();
 };

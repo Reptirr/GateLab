@@ -2,9 +2,13 @@
 
 #include <map>
 #include <stdexcept>
+#include <type_traits>
 
 template<typename K, typename V>
 class BiMap {
+    static_assert(!std::is_same_v<K, V>,
+                  "BiMap requires K and V to be distinct types for overload resolution");
+
     std::map<K, V> forward;
     std::map<V, K> reverse;
 
@@ -19,7 +23,7 @@ public:
         return true;
     }
 
-    bool eraseByKey(const K &key) {
+    bool erase(const K &key) {
         auto it = forward.find(key);
 
         if (it == forward.end())
@@ -31,7 +35,7 @@ public:
         return true;
     }
 
-    bool eraseByValue(const V &value) {
+    bool erase(const V &value) {
         auto it = reverse.find(value);
 
         if (it == reverse.end())
@@ -43,36 +47,16 @@ public:
         return true;
     }
 
-    V &atKey(const K &key) {
-        return forward.at(key);
-    }
+    V &at(const K &key) { return forward.at(key); }
+    const V &at(const K &key) const { return forward.at(key); }
 
-    const V &atKey(const K &key) const {
-        return forward.at(key);
-    }
+    K &at(const V &value) { return reverse.at(value); }
+    const K &at(const V &value) const { return reverse.at(value); }
 
-    K &atValue(const V &value) {
-        return reverse.at(value);
-    }
+    bool contains(const K &key) const { return forward.contains(key); }
+    bool contains(const V &value) const { return reverse.contains(value); }
 
-    const K &atValue(const V &value) const {
-        return reverse.at(value);
-    }
+    size_t size() const { return forward.size(); }
 
-    bool containsKey(const K &key) const {
-        return forward.contains(key);
-    }
-
-    bool containsValue(const V &value) const {
-        return reverse.contains(value);
-    }
-
-    size_t size() const {
-        return forward.size();
-    }
-
-    void clear() {
-        forward.clear();
-        reverse.clear();
-    }
+    void clear() { forward.clear(); reverse.clear(); }
 };

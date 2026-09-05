@@ -1,46 +1,47 @@
 #pragma once
-#include <PinItem.h>
 #include <QGraphicsItem>
-#include <qpainter.h>
+#include <QPainter>
+#include <QLineF>
+#include <QPainterPath>
+#include <set>
+#include <unordered_map>
+
 
 class PinItem;
-
+class LogicWire;
 
 class WireItem : public QGraphicsItem {
 protected:
-    // must be on same scenes
-    std::vector<PinItem*> pins_;
+    std::set<PinItem *> pins_;
+    std::unordered_map<PinItem *, QLineF> lines_;
+    QPointF lines_center_{};
+
+private:
+    QColor color_ = QColorConstants::Black;
+
+    void setColorBySignal(bool signal);
+
+    // пересчитывает центр (среднее точек всех пинов) и перестраивает
+    // линии центр -> каждый пин
+    void rebuildLines();
+
+    friend LogicWire;
 
 public:
     WireItem() = default;
 
-    explicit WireItem(const std::vector<PinItem*> &pins) {
-        pins_ = pins;
+    QPainterPath shape() const override;
+    QRectF boundingRect() const override;
+
+    bool empty() const;
+
+    void addPin(PinItem *pin);
+    void removePin(PinItem *pin);
+
+    std::set<PinItem*> pins() {
+        return pins_;
     }
 
-    QRectF boundingRect() const override {
-        return QRectF();
-    }
-
-    void addPin(PinItem* pin) {
-        pins_.push_back(pin);
-    }
-
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
-        // it`s need 2 pins to draw
-        if (pins_.size() < 2) return;
-
-        // make line between pins 0, 1
-        auto *first_line = new QGraphicsLineItem( QLineF(pins_[0]->pos(), pins_[1]->pos()), this );
-        first_line->setParentItem(this);
-        scene()->addItem(first_line);
-
-        // make other lines from first line center
-        for (int i = 2; i < pins_.size(); i++) {
-            auto *line = new QGraphicsLineItem( QLineF(first_line->line().center(), pins_[i]->pos()), this );
-            line->setParentItem(this);
-            scene()->addItem(line);
-        }
-
-    }
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    int type() const override;
 };
