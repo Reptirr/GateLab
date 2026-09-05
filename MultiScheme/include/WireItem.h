@@ -38,6 +38,10 @@ public:
     void addPin(PinItem *pin);
     void removePin(PinItem *pin);
 
+    std::set<PinItem*> pins() {
+        return pins_;
+    }
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     int type() const override;
 };

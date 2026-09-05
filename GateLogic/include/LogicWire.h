@@ -14,9 +14,12 @@ public:
     LogicWire() = default;
     LogicWire(WireItem *);
 
-    void handle();
+    void handle() const;
 
     void addPin(LogicPin*);
-
     void removePin(LogicPin *removedPin);
+
+    std::vector<LogicPin*> pins() {
+        return pins_;
+    }
 };

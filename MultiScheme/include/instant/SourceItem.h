@@ -22,6 +22,10 @@ public:
         pins_.push_back(pin);
     }
 
+    QSizeF size() override {
+        return QSizeF{width_, height_};
+    }
+
     QRectF boundingRect() const override {
         return QRectF{0, 0, width_, height_};
     }

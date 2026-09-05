@@ -7,6 +7,13 @@
 #include <Controller.h>
 #include <instant/TransistorItem.h>
 
+static QPointF createCenterPos(const QPointF top_left, const QSizeF &rect) {
+    return QPointF{
+        top_left.x() - rect.width()/2,
+        top_left.y() - rect.height()/2
+    };
+}
+
 
 InputMapper::InputMapper(QGraphicsScene *scene, Controller *controller) : scene_(scene) {
     view_ = dynamic_cast<MainView *>(scene->views().at(0));
@@ -17,14 +24,14 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
         // create transistor
         case Qt::Key_T: {
             qDebug() << "Get t press";
-            emit componentCreateRequest(new TransistorItem{mousePos});
+            emit componentCreateRequest(new TransistorItem{createCenterPos(mousePos, TransistorItem{{0,0}}.size())});
             break;
         }
 
         // create source
         case Qt::Key_S: {
             qDebug() << "Get s press";
-            emit componentCreateRequest(new SourceItem{mousePos});
+            emit componentCreateRequest(new SourceItem{createCenterPos(mousePos, SourceItem{{0,0}}.size())});
             break;
         }
 
@@ -64,6 +71,7 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
             qDebug() << "Get d press";
 
             auto *component = getItem<ComponentItem *>(mousePos);
+            if (component == nullptr) return;
             emit componentRemoveRequest(component);
         }
 

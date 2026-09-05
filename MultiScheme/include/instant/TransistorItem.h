@@ -40,7 +40,9 @@ public:
         pins_.push_back(right);
     }
 
-
+    constexpr QSizeF size() override {
+        return QSizeF{width_, height_};
+    }
 
     QRectF boundingRect() const override {
         return QRectF{0, 0, width_, height_};
@@ -49,7 +51,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
         painter->drawRect(0, 0, width_, height_);
 
-        QRectF rect(0, 0, width_, height_);
+        const QRectF rect(0, 0, width_, height_);
         painter->drawText(rect, Qt::AlignCenter, "Transistor");
     }
 

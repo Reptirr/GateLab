@@ -141,6 +141,29 @@ public:
         // add wire recording (NOTE: we do it because we need it in removeWire)
         wires_.insert({wire_item, logic_wire});
     }
+    void removeWire(WireItem *wire_item) {
+        // get logic wire
+        auto *logic_wire = wires_.at(wire_item);
+
+        // remove logic pins from logic_wire & remove logic_wire from pins
+        for (auto *logic_pin : logic_wire->pins()) {
+            logic_wire->removePin(logic_pin);
+            logic_pin->removeWire();
+        }
+
+        // remove pin items from wire_item & remove wire_item from pin_items
+        for (auto *pin_item : wire_item->pins()) {
+            wire_item->removePin(pin_item);
+            pin_item->removeWire();
+        }
+
+        // remove recording from registry
+        wires_.erase(wire_item);
+
+        // after all we can delete logic/ui wire
+        delete wire_item;
+        delete logic_wire;
+    }
 
     void addComponent(ComponentItem *component_item) {
         // get logic side from factory
@@ -211,7 +234,7 @@ public:
 
                 // remove wire_item from scene if it is empty
                 if (wire_item->empty())
-                    wire_item->scene()->removeItem(wire_item);
+                    removeWire(wire_item);
             }
 
             // remove pin_item from scene

@@ -8,19 +8,21 @@ class LogicWire;
 
 
 class LogicPin {
-    bool signal_ = false;
+    bool signal_ = false; // signal from wire (NOTE: checks by owner and sets by wire)
+    bool own_signal_ = false; // signal from owner(NOTE: checks by wire and sets by owner)
 
     // pin can has connections:
     // wire - pin - transistor
 
-    LogicComponent* owner_{}; // for component
+    LogicComponent* owner_{}; // only for component
     LogicWire* conn_{}; // only for wire
 
 public:
     LogicPin(LogicComponent *);
 
-
     bool getSignal() const;
+
+    bool ownSignal() const;
 
     void setSignalByWire(bool);
     void setSignalByOwner(bool);

@@ -13,7 +13,7 @@ class LogicTransistor : public LogicComponent {
 
 public:
     LogicTransistor() :
-    LogicComponent({new LogicPin(this), new LogicPin(this), new LogicPin(this)}),
+    LogicComponent({new LogicPin(this), new LogicPin(this), new LogicPin(nullptr)}),
     left_pin_(pins_[0]),
     top_pin_(pins_[1]),
     right_pin_(pins_[2])
@@ -26,12 +26,8 @@ public:
     }
 
     void handle() override {
-        // NOTE: по сути транзистор = AND по механике сигналов, следовательно можно исплоьзовать && вместо условий
         right_pin_->setSignalByOwner(
-            (
-                top_pin_->getSignal() &&
-                left_pin_->getSignal()
-            ) || right_pin_->getSignal() // if the right_pin_ is true we will not change its signal to false
+            left_pin_->getSignal() && top_pin_->getSignal()
         );
     }
 };

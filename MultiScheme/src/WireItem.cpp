@@ -57,7 +57,7 @@ QRectF WireItem::boundingRect() const {
 }
 
 bool WireItem::empty() const {
-    return lines_.empty() && pins_.empty();
+    return lines_.size() < 2 && pins_.size() < 2;
 }
 
 void WireItem::addPin(PinItem *pin) {

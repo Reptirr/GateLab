@@ -18,6 +18,8 @@ public:
         return nullptr;
     }
 
+    virtual QSizeF size() = 0;
+
     std::vector<PinItem*> pins() {
         return pins_;
     }
