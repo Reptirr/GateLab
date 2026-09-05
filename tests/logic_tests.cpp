@@ -4,55 +4,123 @@
 #include <instant/LogicSource.h>
 #include <instant/LogicTransistor.h>
 
-class ComponentMoc : LogicComponent {
+// Компонент-заглушка ("щуп"): ничего не драйвит сам,
+// нужен только чтобы у пина был владелец, но при этом
+// пин пассивно принимает значения от провода.
+class ProbeComponent : public LogicComponent {
 public:
+    ProbeComponent()
+        : LogicComponent({new LogicPin(this)}) {
+    }
+
+    void handle() override {} // ничего не драйвит
+
+    LogicPin* pin() { return pins_[0]; }
+};
+
+// Такой же щуп, но с двумя независимыми пинами (не соединены между собой внутри компонента)
+class TwoPinProbeComponent : public LogicComponent {
+public:
+    TwoPinProbeComponent()
+        : LogicComponent({new LogicPin(this), new LogicPin(this)}) {
+    }
 
     void handle() override {}
 
-    std::vector<LogicPin *> pins() override { return {new LogicPin(this), new LogicPin(this)}; }
+    LogicPin* pinA() { return pins_[0]; }
+    LogicPin* pinB() { return pins_[1]; }
 };
 
+
 TEST(WireTest, WireTransmitsSignal) {
-    auto *component = new ComponentMoc();
+    TwoPinProbeComponent component;
+    LogicWire wire;
 
-    auto pin1 = component->pins()[0];
-    auto pin2 = component->pins()[1];
+    component.pinA()->setWire(&wire);
+    component.pinB()->setWire(&wire);
+    wire.addPin(component.pinA());
+    wire.addPin(component.pinB());
 
-    auto *wire = new LogicWire();
+    component.pinA()->setSignalByOwner(true);
 
-    // говорим пинам что кому должны говорить что они изменились
-    pin1->setWire(wire);
-    pin2->setWire(wire);
-
-    // говорим вайру кого он соединяет
-    wire->addPin(pin1);
-    wire->addPin(pin2);
-
-    pin1->setSignalByOwner(true);
-
-    ASSERT_TRUE(pin2->getSignal());
-
+    ASSERT_TRUE(component.pinB()->getSignal());
 }
 
-TEST(Transistor, TransistorWork) {
-    auto *transistor = new LogicTransistor();
+TEST(WireTest, WireIsOrOfAllOwnSignals) {
+    ProbeComponent a, b, c;
+    LogicWire wire;
 
-    auto [left, top, right] = transistor->pinsTuple();
+    for (auto* p : {a.pin(), b.pin(), c.pin()}) {
+        p->setWire(&wire);
+        wire.addPin(p);
+    }
+
+    // никто не драйвит -> false
+    ASSERT_FALSE(a.pin()->getSignal());
+
+    // b начинает драйвить true -> все видят true
+    b.pin()->setSignalByOwner(true);
+    ASSERT_TRUE(a.pin()->getSignal());
+    ASSERT_TRUE(c.pin()->getSignal());
+
+    // b перестаёт драйвить -> все обратно false
+    b.pin()->setSignalByOwner(false);
+    ASSERT_FALSE(a.pin()->getSignal());
+    ASSERT_FALSE(c.pin()->getSignal());
+}
+
+TEST(WireTest, RemovePinRecalculatesSignal) {
+    ProbeComponent driver, listener;
+    LogicWire wire;
+
+    driver.pin()->setWire(&wire);
+    listener.pin()->setWire(&wire);
+    wire.addPin(driver.pin());
+    wire.addPin(listener.pin());
+
+    driver.pin()->setSignalByOwner(true);
+    ASSERT_TRUE(listener.pin()->getSignal());
+
+    driver.pin()->removeWire();
+    wire.removePin(driver.pin());
+
+    // драйвера больше нет на проводе -> сигнал должен упасть
+    ASSERT_FALSE(listener.pin()->getSignal());
+}
+
+TEST(TransistorTest, OutputsAndOfInputs) {
+    LogicTransistor transistor;
+    auto [left, top, right] = transistor.pinsTuple();
+
+    left->setSignalByWire(false);
+    top->setSignalByWire(false);
+    ASSERT_FALSE(right->getSignal());
+
+    left->setSignalByWire(true);
+    top->setSignalByWire(false);
+    ASSERT_FALSE(right->getSignal());
 
     left->setSignalByWire(true);
     top->setSignalByWire(true);
-
     ASSERT_TRUE(right->getSignal());
 }
 
-TEST(Source, SourceWork) {
-    auto *source = new LogicSource();
+TEST(SourceTest, AlwaysOutputsTrue) {
+    LogicSource source;
 
-    auto pin = source->pins()[0];
+    ASSERT_TRUE(source.pins()[0]->getSignal());
+}
 
-    ASSERT_TRUE(pin->getSignal());
+TEST(SourceTest, StaysTrueWhenConnectedToWireWithOtherPin) {
+    LogicSource source;
+    ProbeComponent listener;
+    LogicWire wire;
 
-    pin->setSignalByWire(false);
+    source.pins()[0]->setWire(&wire);
+    listener.pin()->setWire(&wire);
+    wire.addPin(source.pins()[0]);
+    wire.addPin(listener.pin());
 
-    ASSERT_TRUE(pin->getSignal());
+    ASSERT_TRUE(source.pins()[0]->getSignal());
+    ASSERT_TRUE(listener.pin()->getSignal());
 }
