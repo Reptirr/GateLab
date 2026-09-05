@@ -1,15 +1,20 @@
 #pragma once
-#include <IPinFul.h>
-#include <vector>
+#include <LogicPin.h>
 
-class LogicPin;
-
-// logic component with black-box logic
-class LogicComponent : public IPinFul {
+class LogicComponent {
+protected:
+    std::vector<LogicPin*> pins_;
 
 public:
-    explicit LogicComponent(const std::vector<LogicPin*> &pins) {
+    LogicComponent(std::vector<LogicPin *> pins) {
         pins_ = pins;
     }
 
+    virtual void handle() = 0;
+
+    virtual std::vector<LogicPin*> pins() {
+        return pins_;
+    }
+
+    virtual ~LogicComponent() {}
 };

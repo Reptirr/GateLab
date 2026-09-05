@@ -2,24 +2,25 @@
 
 #include <QGraphicsItem>
 
-#include "Pin.h"
+#include "PinItem.h"
 
 class PinItem;
 class MainView;
 
-class SchemeItem : public QGraphicsItem {
 
+
+class ComponentItem : public QGraphicsItem {
 protected:
-    // get pins (pos)
-    virtual std::vector<PinItem*> pins() = 0;
+    std::vector<PinItem*> pins_;
 
-    // paint pins
-    void paintPins(QPainter* painter) {
-        for (PinItem* pin : pins()) {
-            pin->paint(painter, {}, nullptr);
-        }
+public:
+    virtual QGraphicsScene* interior() {
+        return nullptr;
     }
 
-    friend MainView;
+    virtual QSizeF size() = 0;
 
+    std::vector<PinItem*> pins() {
+        return pins_;
+    }
 };

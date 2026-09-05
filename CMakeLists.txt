@@ -14,33 +14,53 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-add_executable(GateLab
-        main.cpp
-        MultiScheme/include/SchemeItem.h
+add_library(GateLabCore STATIC
         MultiScheme/include/MainView.h
         MultiScheme/src/MainView.cpp
         MultiScheme/include/PinItem.h
         Controller/include/BiMap.h
         Controller/include/Controller.h
-        GateLogic/include/LogicComponent.h
-        MultiScheme/include/ComponentItem.h
         GateLogic/include/LogicPin.h
         GateLogic/include/LogicWire.h
         GateLogic/src/LogicPin.cpp
         GateLogic/src/LogicWire.cpp
-        GateLogic/include/IPinFul.h
+        MultiScheme/include/ComponentItem.h
+        MultiScheme/include/WireItem.h
+        Controller/src/InputMapper.cpp
+        Controller/include/InputMapper.h
+        MultiScheme/include/UIConstants.h
+        GateLogic/include/instant/LogicSource.h
+        MultiScheme/include/instant/SourceItem.h
+        MultiScheme/src/WireItem.cpp
+        Controller/include/LogicComponentsFactory.h
 )
 
-target_link_libraries(GateLab
+target_link_libraries(GateLabCore PUBLIC
         Qt::Core
         Qt::Gui
         Qt::Widgets
 )
-target_include_directories(GateLab PRIVATE
+
+target_include_directories(GateLabCore PUBLIC
         MultiScheme/include
         GateLogic/include
         Controller/include
 )
+
+add_executable(GateLab main.cpp)
+target_link_libraries(GateLab PRIVATE GateLabCore)
+
+target_link_options(GateLabCore PRIVATE -fuse-ld=lld)
+target_precompile_headers(GateLab PRIVATE
+        <QWidget>
+        <QObject>
+        <QString>
+        <QGraphicsScene>
+        <QGraphicsItem>
+)
+
+enable_testing()
+add_subdirectory(tests)
 
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -71,4 +91,3 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
                 "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
     endforeach (QT_LIB)
 endif ()
-

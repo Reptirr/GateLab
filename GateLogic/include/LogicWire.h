@@ -1,15 +1,25 @@
 #pragma once
 
-#include <IPinFul.h>
 #include <vector>
 
+class WireItem;
 class LogicPin;
 
-class LogicWire : public IPinFul {
+class LogicWire {
     std::vector<LogicPin*> pins_;
 
+    WireItem *signal_consumer{};
+
 public:
-    void handle() override;
+    LogicWire() = default;
+    LogicWire(WireItem *);
+
+    void handle() const;
 
     void addPin(LogicPin*);
+    void removePin(LogicPin *removedPin);
+
+    std::vector<LogicPin*> pins() {
+        return pins_;
+    }
 };
