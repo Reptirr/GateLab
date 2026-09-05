@@ -26,7 +26,7 @@ class InputMapper : public QObject {
     template<typename T>
     T getItem(const QPointF pos) {
         for (auto *item : scene_->items(pos)) {
-            if (T res = qgraphicsitem_cast<T>(item)) {
+            if (T res = dynamic_cast<T>(item)) {
                 return res;
             }
         }
@@ -37,7 +37,7 @@ public:
     InputMapper(QGraphicsScene *scene, Controller *controller);
 
 public slots:
-    void onKeyPress(QKeyEvent *, QPointF );
+    void onKeyPress(const QKeyEvent *, QPointF );
     void onMouseDoubleClick(QMouseEvent *);
     void onMousePress(QMouseEvent *);
 
@@ -49,8 +49,7 @@ signals:
 
     // create requests
     void wireCreateRequest(PinItem *, PinItem *);
-    void transistorCreateRequest(QPointF);
-    void sourceCreateRequest(QPointF);
+    void componentCreateRequest(ComponentItem *);
 
     // delete request
     void componentRemoveRequest(ComponentItem *);

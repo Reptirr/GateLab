@@ -1,6 +1,7 @@
 #pragma once
 #include <BiMap.h>
 #include <InputMapper.h>
+#include <LogicComponentsFactory.h>
 #include <LogicPin.h>
 #include <LogicWire.h>
 #include <MainView.h>
@@ -54,32 +55,17 @@ class Controller : public QObject {
                 this, &Controller::onDrillDownRequest);
         connect(input_mapper_, &InputMapper::drillUpRequest, // drill-up
                 this, &Controller::onDrillUpRequest);
-        connect(input_mapper_, &InputMapper::transistorCreateRequest, // transistor-create
-                this, &Controller::onTransistorCreateRequest);
         connect(input_mapper_, &InputMapper::wireCreateRequest, // wire-create
                 this, &Controller::onWireCreateRequest);
-        connect(input_mapper_, &InputMapper::sourceCreateRequest, // source-create
-                this, &Controller::onSourceCreateRequest);
-        connect(input_mapper_, &InputMapper::componentRemoveRequest,
-                this, &Controller::onComponentRemoveRequest); // component-delete
+        connect(input_mapper_, &InputMapper::componentRemoveRequest, // component-delete
+                this, &Controller::onComponentRemoveRequest);
+        connect(input_mapper_, &InputMapper::componentCreateRequest,
+                this, &Controller::onComponentCreateRequest); // component-create
     }
 
 public slots:
-    void onTransistorCreateRequest(QPointF pos) {
-        auto size = TransistorItem{{0,0}}.boundingRect().size();
-
-        pos.setX(pos.x() - size.width()/2);
-        pos.setY(pos.y() - size.height()/2);
-
-        addTransistor(new TransistorItem(pos));
-    }
-    void onSourceCreateRequest(QPointF pos) {
-        auto size = SourceItem{{0, 0}}.boundingRect().size();
-
-        pos.setX(pos.x() - size.width()/2);
-        pos.setY(pos.y() - size.height()/2);
-
-        addSource(new SourceItem(pos));
+    void onComponentCreateRequest(ComponentItem *component_item) {
+        addComponent(component_item);
     }
 
     void onWireCreateRequest(PinItem *pin1, PinItem *pin2) {
@@ -108,19 +94,23 @@ public:
         return main_view_;
     }
 
-    void addWire(std::vector<PinItem *> pin_items) {
+    void addWire(const std::vector<PinItem *> &pin_items) {
         // pins must have no wire
         for (const auto *pin_item : pin_items)
-            if (pin_item->wire())
+            if (pin_item->wire()) {
+                qDebug() << "pin already has a wire";
                 return;
+            }
 
         // get logic_pins
         std::vector<LogicPin *> logic_pins{};
         for (auto *pin_item : pin_items)
-            if (auto it = pins_.extract(pin_item))
-                logic_pins.push_back(it.mapped());
-            else
+            if (auto it = pins_.at(pin_item))
+                logic_pins.push_back(it);
+            else {
+                qDebug() << "no recording of pin_item";
                 return; // there is no recording of that pin_item
+            }
 
         // create ui, logic wire
         auto *wire_item = new WireItem{};
@@ -146,77 +136,47 @@ public:
 
         // add wire_item to scene
         main_view_->scene()->addItem(wire_item);
+        qDebug() << "add wire to scene";
 
+        // add wire recording (NOTE: we do it because we need it in removeWire)
+        wires_.insert({wire_item, logic_wire});
     }
 
-    void addTransistor(TransistorItem* component) {
-        // =========
-        // UI
-        // =========
+    void addComponent(ComponentItem *component_item) {
+        // get logic side from factory
+        auto *logic_component = logicTypeByItem(component_item);
+        if (logic_component == nullptr) {
+            // can`t find that type
 
-        // add component to scene
-        main_view_->scene()->addItem(component);
-
-        // get pins from component
-        std::vector<PinItem *> pin_items = component->pins();
-
-        // add pins item to scene
-        for (auto *pin : pin_items) {
-            main_view_->scene()->addItem(pin);
+            qDebug() << "Undefined component_item type";
         }
 
+        // get pin vectors
+        auto logic_pins = logic_component->pins();
+        auto pin_items = component_item->pins();
 
-        // =========
-        // LOGIC
-        // =========
-
-        // create transistor
-        auto *transistor = new LogicTransistor();
-
-        // get pins
-        auto [left, top, right] = transistor->pinsTuple();
-
-        // add transistor to registry
-        black_box_components_.insert({component, transistor});
-
-        // add pins to registry
-        pins_.insert({pin_items[0], left});
-        pins_.insert({pin_items[1], top});
-        pins_.insert({pin_items[2], right});
-    }
-
-    void addSource(SourceItem* item) {
-        // =========
-        // UI
-        // =========
-
-        // add component to scene
-        main_view_->scene()->addItem(item);
-
-        // get pins from component
-        std::vector<PinItem *> pin_items = item->pins();
-
-        // add pins item to scene
-        for (auto *pin : pin_items) {
-            main_view_->scene()->addItem(pin);
+        // fallback if vectors have different sizes
+        if (logic_pins.size() != pin_items.size()) {
+            qDebug() << "vectors have different sizes";
+            return;
         }
 
+        // pin.owner_ was already set in component class.
 
-        // =========
-        // LOGIC
-        // =========
+        // create pin recordings in registry & add pins to scene (NOTE: we do it because we need it in addWire)
+        for (int i = 0; i < pin_items.size(); i++) {
+            auto *logic_pin = logic_pins[i];
+            auto *pin_item = pin_items[i];
 
-        // create transistor
-        auto *source = new LogicSource();
+            pins_.insert({pin_item, logic_pin});
+            main_view_->scene()->addItem(pin_item);
+        }
 
-        // get pins
-        auto logic_pin = source->pins()[0];
+        // add component_item to scene
+        main_view_->scene()->addItem(component_item);
 
-        // add transistor to registry
-        black_box_components_.insert({item, source});
-
-        // add pins to registry
-        pins_.insert({pin_items[0], logic_pin});
+        // add recording in black_box_components_ (NOTE: we do this because we need it in removeComponent)
+        black_box_components_.insert({component_item, logic_component});
     }
 
     void removeComponent(ComponentItem *component_item) {

@@ -4,10 +4,10 @@
 
 enum {
     // basic
-    PinType = QGraphicsItem::UserType + 1,
-    WireType = QGraphicsItem::UserType + 2,
+    PinType = QGraphicsItem::UserType + 10,
+    WireType = QGraphicsItem::UserType + 20,
 
     // derived
-    TransistorType = QGraphicsItem::UserType + 3,
-    SourceType = QGraphicsItem::UserType + 4
+    TransistorType = QGraphicsItem::UserType + 30,
+    SourceType = QGraphicsItem::UserType + 40
 };

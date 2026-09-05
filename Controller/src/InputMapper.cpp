@@ -7,32 +7,24 @@
 #include <Controller.h>
 #include <instant/TransistorItem.h>
 
-#define CONTAINS_VALUE(collection, value) \
-    (std::find(std::begin(collection), std::end(collection), (value)) != std::end(collection))
-
-#define CONTAINS_QTYPE(collection, Type) \
-    (std::find_if(std::begin(collection), std::end(collection), \
-        [](auto* item) { return qgraphicsitem_cast<Type*>(item) != nullptr; }) \
-        != std::end(collection))
-
 
 InputMapper::InputMapper(QGraphicsScene *scene, Controller *controller) : scene_(scene) {
     view_ = dynamic_cast<MainView *>(scene->views().at(0));
 }
 
-void InputMapper::onKeyPress(QKeyEvent *keyEvent, QPointF mousePos) {
+void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) {
     switch (keyEvent->key()) {
         // create transistor
         case Qt::Key_T: {
-            emit transistorCreateRequest(mousePos);
-
+            qDebug() << "Get t press";
+            emit componentCreateRequest(new TransistorItem{mousePos});
             break;
         }
 
         // create source
         case Qt::Key_S: {
-            emit sourceCreateRequest(mousePos);
-
+            qDebug() << "Get s press";
+            emit componentCreateRequest(new SourceItem{mousePos});
             break;
         }
 
