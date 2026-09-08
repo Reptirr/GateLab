@@ -15,6 +15,7 @@ public:
         INIT_PINS(1)
 
         pin_ = pins_[0];
+        pin_->setSignalByOwner(true);
     }
 
     void handle() override {

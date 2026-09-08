@@ -7,16 +7,15 @@ class IPinFul;
 class LogicWire;
 
 
-class LogicPin {
+class LogicPin : public std::enable_shared_from_this<LogicPin> {
     bool signal_ = false; // signal from wire (NOTE: checks by owner and sets by wire)
     bool own_signal_ = false; // signal from owner(NOTE: checks by wire and sets by owner)
 
-    // pin can has connections:
+    // pin can has connection:
     // wire - pin - transistor
 
     std::weak_ptr<LogicComponent> owner_; // only for component
-
-    std::shared_ptr<LogicWire> conn_; // only for wire
+    std::shared_ptr<LogicWire> conn_; // only for wire; deletes itself
 
 public:
     explicit LogicPin(const std::weak_ptr<LogicComponent> &owner);
@@ -32,4 +31,6 @@ public:
     void setWire(const std::shared_ptr<LogicWire> &external);
 
     void removeWire();
+
+    ~LogicPin();
 };

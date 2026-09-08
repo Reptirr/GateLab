@@ -15,24 +15,25 @@ find_package(Qt6 COMPONENTS
         REQUIRED)
 
 add_library(GateLabCore STATIC
-        GateLabCore/MultiScheme/include/MainView.h
-        GateLabCore/MultiScheme/src/MainView.cpp
-        GateLabCore/MultiScheme/include/PinItem.h
-        GateLabCore/Controller/include/BiMap.h
-        GateLabCore/Controller/include/Controller.h
-        GateLabCore/GateLogic/include/LogicPin.h
-        GateLabCore/GateLogic/include/LogicWire.h
-        GateLabCore/GateLogic/src/LogicPin.cpp
-        GateLabCore/GateLogic/src/LogicWire.cpp
-        GateLabCore/MultiScheme/include/ComponentItem.h
-        GateLabCore/MultiScheme/include/WireItem.h
-        GateLabCore/Controller/src/InputMapper.cpp
-        GateLabCore/Controller/include/InputMapper.h
-        GateLabCore/MultiScheme/include/UIConstants.h
-        GateLabCore/GateLogic/include/instant/LogicSource.h
-        GateLabCore/MultiScheme/include/instant/SourceItem.h
-        GateLabCore/MultiScheme/src/WireItem.cpp
-        GateLabCore/Controller/include/LogicComponentsFactory.h
+        MultiScheme/include/MainView.h
+        MultiScheme/src/MainView.cpp
+        MultiScheme/include/PinItem.h
+        Controller/include/BiMap.h
+        Controller/include/Controller.h
+        GateLogic/include/LogicPin.h
+        GateLogic/include/LogicWire.h
+        GateLogic/src/LogicPin.cpp
+        GateLogic/src/LogicWire.cpp
+        MultiScheme/include/ComponentItem.h
+        MultiScheme/include/WireItem.h
+        Controller/src/InputMapper.cpp
+        Controller/include/InputMapper.h
+        MultiScheme/include/UIConstants.h
+        GateLogic/include/instant/LogicSource.h
+        MultiScheme/include/instant/SourceItem.h
+        MultiScheme/src/WireItem.cpp
+        Controller/include/LogicComponentsFactory.h
+        GateLogic/include/Utils.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
@@ -42,9 +43,9 @@ target_link_libraries(GateLabCore PUBLIC
 )
 
 target_include_directories(GateLabCore PUBLIC
-        GateLabCore/MultiScheme/include
-        GateLabCore/GateLogic/include
-        GateLabCore/Controller/include
+        MultiScheme/include
+        GateLogic/include
+        Controller/include
 )
 
 add_executable(GateLab main.cpp)

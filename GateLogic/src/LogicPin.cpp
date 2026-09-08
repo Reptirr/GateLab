@@ -9,17 +9,17 @@ void LogicPin::setWire(const std::shared_ptr<LogicWire>& external) {
 }
 
 void LogicPin::removeWire() {
+    conn_->removePin(weak_from_this());
     conn_.reset();
     signal_ = false; // there is no source of signal anymore
 
-    if (auto ptr = owner_.lock()) {
+    if (const auto ptr = owner_.lock()) {
         ptr->handle();
     }
 }
 
 LogicPin::LogicPin(const std::weak_ptr<LogicComponent> &owner) {
     owner_ = owner;
-    conn_ = nullptr;
 }
 
 bool LogicPin::getSignal() const {
@@ -55,4 +55,8 @@ void LogicPin::setSignalByOwner(const bool s) {
     } else {
         signal_ = s;
     }
+}
+
+LogicPin::~LogicPin() {
+    if (conn_) conn_->removePin(weak_from_this());
 }

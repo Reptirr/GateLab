@@ -1,13 +1,15 @@
 #pragma once
 
 #include <memory>
+#include <set>
+#include <Utils.h>
 #include <vector>
 
 class WireItem;
 class LogicPin;
 
 class LogicWire {
-    std::vector<std::weak_ptr<LogicPin>> pins_;
+    std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin>> pins_;
 
     WireItem *signal_consumer{};
 
@@ -17,5 +19,6 @@ public:
 
     void handle();
 
-    void addPin(std::weak_ptr<LogicPin> pin);
+    void addPin(const std::weak_ptr<LogicPin> &pin);
+    void removePin(const std::weak_ptr<LogicPin> &pin);
 };
