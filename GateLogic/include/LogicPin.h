@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <memory>
 
 class LogicComponent;
 class IPinFul;
@@ -14,27 +14,22 @@ class LogicPin {
     // pin can has connections:
     // wire - pin - transistor
 
-    LogicComponent* owner_{}; // only for component
-    LogicWire* conn_{}; // only for wire
+    std::weak_ptr<LogicComponent> owner_; // only for component
+
+    std::shared_ptr<LogicWire> conn_; // only for wire
 
 public:
-    LogicPin(LogicComponent *);
+    explicit LogicPin(const std::weak_ptr<LogicComponent> &owner);
 
     bool getSignal() const;
 
     bool ownSignal() const;
 
     void setSignalByWire(bool);
+
     void setSignalByOwner(bool);
 
-    LogicComponent *owner() const {
-        return owner_;
-    }
-    // returns nullptr if there is no wire
-    LogicWire *wire() const {
-        return conn_;
-    }
+    void setWire(const std::shared_ptr<LogicWire> &external);
 
-    void setWire(LogicWire*);
     void removeWire();
 };
