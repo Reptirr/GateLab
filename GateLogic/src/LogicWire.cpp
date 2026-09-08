@@ -2,7 +2,6 @@
 #include <LogicWire.h>
 #include <LogicPin.h>
 #include <WireItem.h>
-#include <cstdio>
 
 LogicWire::LogicWire(WireItem *item) {
     signal_consumer = item;
@@ -20,9 +19,8 @@ void LogicWire::handle() {
     bool signal{};
 
     for (auto pin__ : pins_) {
-        if (auto pin = pin__.lock()) {
-            bool own = pin->ownSignal();
-            if (own) {
+        if (const auto pin = pin__.lock()) {
+            if (bool own = pin->ownSignal()) {
                 signal = true;
                 break;
             }
@@ -30,7 +28,7 @@ void LogicWire::handle() {
     }
 
     for (auto pin__ : pins_) {
-        if (auto pin = pin__.lock()) {
+        if (const auto pin = pin__.lock()) {
             pin->setSignalByWire(signal);
         }
     }
@@ -40,7 +38,12 @@ void LogicWire::handle() {
     }
 }
 
-void LogicWire::addPin(std::weak_ptr<LogicPin> pin) {
-    pins_.push_back(pin);
+void LogicWire::addPin(const std::weak_ptr<LogicPin> &pin) {
+    pins_.insert(pin);
+    handle();
+}
+
+void LogicWire::removePin(const std::weak_ptr<LogicPin> &pin) {
+    pins_.erase(pin);
     handle();
 }

@@ -94,6 +94,14 @@ public:
     }
 
     void addWire(const std::vector<PinItem *> &pin_items) {
+        // cant connect already connected pins
+        for (auto pin : pin_items) {
+            if (pin->wire()) {
+                qDebug() << "pin already has a wire";
+                return;
+            }
+        }
+
         // LOGIC: get logic pins and create a wire and set pins for wire & set wire for pins
         // UI: the same but with ui side
         // no recordings
@@ -106,7 +114,7 @@ public:
         }
 
         // temp
-        auto logic_wire = std::make_shared<LogicWire>(wire_item);
+        const auto logic_wire = std::make_shared<LogicWire>(wire_item);
 
         // set pins for wire & wire for pins at logic-side
         // set pins for wire & wire for pins at ui-side
@@ -166,10 +174,9 @@ public:
         }
 
         delete component_item;
-
     }
 
-    ~Controller() {
+    ~Controller() override {
         delete input_mapper_;
     }
 };

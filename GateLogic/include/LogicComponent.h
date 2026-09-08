@@ -6,6 +6,7 @@
         for (int i = 0; i < count; i++) \
             pins_.push_back(std::make_shared<LogicPin>(weak_from_this()));
 
+
 class LogicComponent : public std::enable_shared_from_this<LogicComponent> {
 protected:
     std::vector<std::shared_ptr<LogicPin>> pins_;

@@ -33,6 +33,7 @@ add_library(GateLabCore STATIC
         MultiScheme/include/instant/SourceItem.h
         MultiScheme/src/WireItem.cpp
         Controller/include/LogicComponentsFactory.h
+        GateLogic/include/Utils.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
