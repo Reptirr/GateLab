@@ -48,6 +48,10 @@ class Controller : public QObject {
                 input_mapper_, &InputMapper::onKeyPress);
         connect(main_view_, &MainView::mouseDoubleClick,
                 input_mapper_, &InputMapper::onMouseDoubleClick);
+        connect(main_view_, &MainView::mouseMove,
+                input_mapper_, &InputMapper::onMouseMove);
+        connect(main_view_, &MainView::mousePress,
+                input_mapper_, &InputMapper::onMousePress);
 
         // InputMapper -> Controller
         connect(input_mapper_, &InputMapper::drillDownRequest, // drill-down
@@ -100,6 +104,12 @@ public:
                 qDebug() << "pin already has a wire";
                 return;
             }
+        }
+
+        // cant connect the same pins
+        if (const std::unordered_set<PinItem*> temp_map{pin_items.begin(),pin_items.end()}; pin_items.size() != temp_map.size()) {
+            qDebug() << "cant connect the same pins";
+            return;
         }
 
         // LOGIC: get logic pins and create a wire and set pins for wire & set wire for pins

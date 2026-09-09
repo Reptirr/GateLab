@@ -34,6 +34,9 @@ add_library(GateLabCore STATIC
         MultiScheme/src/WireItem.cpp
         Controller/include/LogicComponentsFactory.h
         GateLogic/include/Utils.h
+        Controller/include/Mode.h
+        IDEUI/include/TypeWidget.h
+        IDEUI/include/MainWidget.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
@@ -46,6 +49,7 @@ target_include_directories(GateLabCore PUBLIC
         MultiScheme/include
         GateLogic/include
         Controller/include
+        IDEUI/include
 )
 
 add_executable(GateLab main.cpp)
