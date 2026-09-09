@@ -10,29 +10,26 @@ public:
     TransistorItem(QPointF pos) {
         setPos(pos);
 
-        auto *top = new PinItem();
-        auto *left = new PinItem();
-        auto *right = new PinItem();
+        auto *top = new PinItem{this};
+        auto *left = new PinItem{this};
+        auto *right = new PinItem{this};
 
-        auto x_center = (width_ - top->boundingRect().width()) / 2;
-        auto y_center = (height_ - top->boundingRect().height()) / 2;
+        const auto x_center = (width_ - top->boundingRect().width()) / 2;
+        const auto y_center = (height_ - top->boundingRect().height()) / 2;
 
-        left->setRelativePos(
+        left->setPos(
             -(left->boundingRect().width() / 2),
-            y_center,
-            this
+            y_center
         );
 
-        top->setRelativePos(
+        top->setPos(
             x_center,
-            -(top->boundingRect().height() / 2),
-            this
+            -(top->boundingRect().height() / 2)
         );
 
-        right->setRelativePos(
+        right->setPos(
             width_ - (right->boundingRect().width() / 2),
-            y_center,
-            this
+            y_center
         );
 
         pins_.push_back(left);

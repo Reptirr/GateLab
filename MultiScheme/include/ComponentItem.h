@@ -23,4 +23,11 @@ public:
     std::vector<PinItem*> pins() {
         return pins_;
     }
+
+    ~ComponentItem() override {
+        // delete pins
+        for (const auto *pin : pins_) {
+            delete pin;
+        }
+    }
 };

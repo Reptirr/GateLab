@@ -1,25 +1,21 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 class WireItem;
 class LogicPin;
 
 class LogicWire {
-    std::vector<LogicPin*> pins_;
+    std::vector<std::weak_ptr<LogicPin>> pins_;
 
     WireItem *signal_consumer{};
 
 public:
     LogicWire() = default;
-    LogicWire(WireItem *);
+    explicit LogicWire(WireItem *);
 
-    void handle() const;
+    void handle();
 
-    void addPin(LogicPin*);
-    void removePin(LogicPin *removedPin);
-
-    std::vector<LogicPin*> pins() {
-        return pins_;
-    }
+    void addPin(std::weak_ptr<LogicPin> pin);
 };
