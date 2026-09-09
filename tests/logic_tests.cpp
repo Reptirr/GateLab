@@ -21,12 +21,12 @@ TEST(WireTest, WireTransmitsSignal) {
     auto *wire = new LogicWire();
 
     // говорим пинам что кому должны говорить что они изменились
-    pin1->setWire(wire);
-    pin2->setWire(wire);
+    pin1->setWire(*TODO);
+    pin2->setWire(*TODO);
 
     // говорим вайру кого он соединяет
-    wire->addPin(pin1);
-    wire->addPin(pin2);
+    wire->addPin(TODO);
+    wire->addPin(TODO);
 
     pin1->setSignalByOwner(true);
 
@@ -50,9 +50,9 @@ TEST(Source, SourceWork) {
 
     auto pin = source->pins()[0];
 
-    ASSERT_TRUE(pin->getSignal());
+    ASSERT_TRUE(pin.getSignal());
 
     pin->setSignalByWire(false);
 
-    ASSERT_TRUE(pin->getSignal());
+    ASSERT_TRUE(pin.getSignal());
 }

@@ -3,31 +3,33 @@
 #include <LogicComponent.h>
 #include <LogicPin.h>
 
-class LogicPin;
-
-
 class LogicTransistor : public LogicComponent {
-    LogicPin* left_pin_{};
-    LogicPin* top_pin_{};
-    LogicPin* right_pin_{};
+    std::shared_ptr<LogicPin> left_pin_;
+    std::shared_ptr<LogicPin> top_pin_;
+    std::shared_ptr<LogicPin> right_pin_;
 
 public:
-    LogicTransistor() :
-    LogicComponent({new LogicPin(this), new LogicPin(this), new LogicPin(nullptr)}),
-    left_pin_(pins_[0]),
-    top_pin_(pins_[1]),
-    right_pin_(pins_[2])
-    {
+    /**
+     * Please do not use this constructor. Instead use LogicComponent::create
+     */
+    LogicTransistor() = default;
 
-    }
-
-    std::tuple<LogicPin*, LogicPin*, LogicPin*> pinsTuple() {
-        return { left_pin_, top_pin_, right_pin_ };
+    void initPins() override {
+        INIT_PINS(3);
+        left_pin_ = pins_[0];
+        top_pin_ = pins_[1];
+        right_pin_ = pins_[2];
     }
 
     void handle() override {
         right_pin_->setSignalByOwner(
             left_pin_->getSignal() && top_pin_->getSignal()
         );
+    }
+
+    ~LogicTransistor() override {
+        left_pin_.reset();
+        top_pin_.reset();
+        right_pin_.reset();
     }
 };
