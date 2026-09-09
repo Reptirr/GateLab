@@ -93,13 +93,17 @@ public:
         initConnects();
     }
 
-    MainView* mainView() {
+    MainView *mainView() const {
         return main_view_;
+    }
+
+    InputMapper *inputMapper() const {
+        return input_mapper_;
     }
 
     void addWire(const std::vector<PinItem *> &pin_items) {
         // cant connect already connected pins
-        for (auto pin : pin_items) {
+        for (const auto pin : pin_items) {
             if (pin->wire()) {
                 qDebug() << "pin already has a wire";
                 return;

@@ -25,26 +25,10 @@ static QPointF getCenterPos(const QPointF top_left, const QSizeF &rect) {
 
 InputMapper::InputMapper(QGraphicsScene *scene, Controller *controller) : scene_(scene) {
     view_ = dynamic_cast<MainView *>(scene->views().at(0));
-
 }
 
 void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) {
-    // mode switching
-    switch (keyEvent->key()) {
-        case Qt::Key_W:
-            qDebug() << "change mode to wire creating";
-            mode_ = WireCreating{};
-            return;
-
-        case Qt::Key_C:
-            qDebug() << "change mode to component manipulating";
-            mode_ = ComponentManipulating{};
-            return;
-
-        default: break;
-    }
-
-    if (std::holds_alternative<ComponentManipulating>(mode_)) {
+    if (std::holds_alternative<ComponentEdit>(mode_)) {
         switch (keyEvent->key()) {
             // create transistor
             case Qt::Key_T: {
@@ -121,6 +105,10 @@ void InputMapper::onMouseMove(const QMouseEvent *e) const {
             }
         );
     }
+}
+
+void InputMapper::onModeChange(const EditMode mode) {
+    mode_.emplaceByEnum(mode);
 }
 
 void InputMapper::onMouseDoubleClick(const QMouseEvent *event) {

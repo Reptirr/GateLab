@@ -1,13 +1,14 @@
 #include <Controller.h>
+#include <MainWindow.h>
 #include <QApplication>
 
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
-    auto *controller = new Controller();
+    auto *mainWindow = new MainWindow{};
 
-    controller->mainView()->show();
+    mainWindow->show();
 
     return QApplication::exec();
 }

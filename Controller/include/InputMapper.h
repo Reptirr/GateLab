@@ -41,6 +41,8 @@ public slots:
     void onMousePress(const QMouseEvent *);
     void onMouseMove(const QMouseEvent *) const;
 
+    void onModeChange(EditMode mode);
+
     void setScene(QGraphicsScene *);
 
 signals:

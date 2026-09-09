@@ -35,8 +35,8 @@ add_library(GateLabCore STATIC
         Controller/include/LogicComponentsFactory.h
         GateLogic/include/Utils.h
         Controller/include/Mode.h
-        IDEUI/include/TypeWidget.h
-        IDEUI/include/MainWidget.h
+        IDEUI/include/GLToolBar.h
+        IDEUI/include/MainWindow.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

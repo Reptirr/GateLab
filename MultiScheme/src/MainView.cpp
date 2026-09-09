@@ -56,7 +56,6 @@ void MainView::resizeEvent(QResizeEvent *event) {
 MainView::MainView(QGraphicsScene *main_scene) {
     _main_scene = main_scene;
 
-    setFixedSize(1000, 1000);
     setRenderHints({QPainter::Antialiasing, QPainter::TextAntialiasing});
 
     setScene(_main_scene);
