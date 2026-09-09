@@ -6,18 +6,15 @@ class SourceItem : public ComponentItem {
     qreal height_ = 75;
 
 public:
-    SourceItem(QPointF pos) {
+    explicit SourceItem(const QPointF pos) {
         setPos(pos);
 
-        auto *pin = new PinItem{};
+        auto *pin = new PinItem{this};
 
-        auto y_center = (height_ - pin->boundingRect().width()) / 2;
-
-        pin->setRelativePos(
-            width_ - pin->boundingRect().width()/2,
-            y_center,
-            this
-        );
+        pin->setPos({
+            SourceItem::boundingRect().width() - pin->boundingRect().width() / 2,
+            SourceItem::boundingRect().height() / 2 - pin->boundingRect().height() / 2
+        });
 
         pins_.push_back(pin);
     }

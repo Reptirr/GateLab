@@ -3,17 +3,26 @@
 
 // just the component that always set pin signal to true
 class LogicSource : public LogicComponent {
-    LogicPin *pin_;
+    std::shared_ptr<LogicPin> pin_;
 
 public:
-    LogicSource() :
-    LogicComponent({new LogicPin(this)}),
-    pin_(pins_[0])
-    {
+    /**
+     * Please do not use this constructor. Instead use LogicComponent::create
+     */
+    LogicSource() = default;
+
+    void initPins() override {
+        INIT_PINS(1)
+
+        pin_ = pins_[0];
         pin_->setSignalByOwner(true);
     }
 
     void handle() override {
-        pin_->setSignalByOwner(true);
+        pins_[0]->setSignalByOwner(true);
+    }
+
+    ~LogicSource() override {
+        pin_.reset();
     }
 };

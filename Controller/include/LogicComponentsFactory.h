@@ -4,13 +4,13 @@
 #include <instant/LogicSource.h>
 #include <instant/LogicTransistor.h>
 
-inline LogicComponent *logicTypeByItem(const ComponentItem *component_item) {
+inline std::shared_ptr<LogicComponent> logicTypeByItem(const ComponentItem *component_item) {
     switch (component_item->type()) {
         case TransistorType:
-            return new LogicTransistor{};
+            return std::move(LogicComponent::create<LogicTransistor>());
 
         case SourceType:
-            return new LogicSource{};
+            return LogicComponent::create<LogicSource>();
 
         default:
             return nullptr; // fallback
