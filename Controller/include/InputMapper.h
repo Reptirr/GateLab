@@ -1,7 +1,7 @@
 #pragma once
+#include <Mode.h>
 #include <qgraphicsitem.h>
 #include <qgraphicsscene.h>
-#include <QObject>
 #include <qpoint.h>
 #include <stack>
 
@@ -20,8 +20,7 @@ class InputMapper : public QObject {
     MainView *view_{};
     QGraphicsScene *scene_;
 
-    PinItem *selected_pin_ = nullptr;
-    std::stack<QGraphicsScene*> drill_stack_;
+    Mode mode_;
 
     template<typename T>
     T getItem(const QPointF pos) {
@@ -38,8 +37,9 @@ public:
 
 public slots:
     void onKeyPress(const QKeyEvent *, QPointF );
-    void onMouseDoubleClick(QMouseEvent *);
-    void onMousePress(QMouseEvent *);
+    void onMouseDoubleClick(const QMouseEvent *);
+    void onMousePress(const QMouseEvent *);
+    void onMouseMove(const QMouseEvent *) const;
 
     void setScene(QGraphicsScene *);
 

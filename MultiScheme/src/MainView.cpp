@@ -42,6 +42,10 @@ void MainView::mousePressEvent(QMouseEvent *event) {
     emit mousePress(event->clone());
 }
 
+void MainView::mouseMoveEvent(QMouseEvent *event) {
+    emit mouseMove(event->clone());
+}
+
 void MainView::resizeEvent(QResizeEvent *event) {
     QGraphicsView::resizeEvent(event);
 
@@ -59,4 +63,6 @@ MainView::MainView(QGraphicsScene *main_scene) {
 
     // увеличиваем сцену на весь view
     scene()->setSceneRect(viewport()->rect());
+
+    setMouseTracking(true); // for input_mapper
 }
