@@ -37,6 +37,7 @@ add_library(GateLabCore STATIC
         Controller/include/Mode.h
         IDEUI/include/GLToolBar.h
         IDEUI/include/MainWindow.h
+        MultiScheme/include/WireItemHelpers.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

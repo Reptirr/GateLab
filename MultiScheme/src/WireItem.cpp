@@ -1,45 +1,71 @@
 #include <WireItem.h>
 
 #include <PinItem.h>
+#include <WireItemHelpers.h>
 
 void WireItem::setColorBySignal(bool signal) {
     color_ = signal ? QColorConstants::Green : QColorConstants::Black;
     update();
 }
 
-void WireItem::rebuildLines() {
-    prepareGeometryChange();
+WireItem::WireItem(QGraphicsItem *from, QGraphicsItem *to) {
+    auto *wire_line = new WireLine{from, to};
 
-    if (pins_.empty()) {
-        lines_.clear();
-        lines_center_ = QPointF{};
-        return;
-    }
+    lines_.insert(wire_line);
+}
 
-    // центр пина в сценовых координатах
-    auto pinCenter = [](PinItem *pin) {
-        return pin->mapToScene(pin->boundingRect().center());
-    };
+void WireItem::addNode(WireLine *on_line, const QPointF pos) {
+    assert(on_line->contains(pos));
 
-    QPointF sum{};
-    for (const auto pin : pins_)
-        sum += pinCenter(pin);
-    lines_center_ = sum / static_cast<qreal>(pins_.size());
+    // разделяем линию на 2 части, между которыми нода
+    // удаляем текущую линию, создаем 2 новых линии с соединением в ноде
 
-    lines_.clear();
-    for (const auto pin : pins_)
-        lines_.emplace(pin, QLineF(lines_center_, pinCenter(pin)));
+    lines_.erase(on_line);
 
-    update();
+    auto *node = new WireNode();
+
+    auto *line_before = new WireLine(on_line->from(), node);
+    auto *line_after = new WireLine(node, on_line->to());
+
+    node->init(line_before, line_after);
+
+    delete on_line;
+
+    // добавляем всех на сцену
+    scene()->addItem(line_before);
+    scene()->addItem(node);
+    scene()->addItem(line_after);
+
+    lines_.insert({line_before, line_after});
+}
+
+void WireItem::removeNode(const WireNode *node) {
+    // убираем текущую ноду и соединяем линии которые были соединены с нодой напрямую
+
+    auto *new_line = new WireLine(node->behind()->from(), node->ahead()->to());
+
+    delete node->behind();
+    delete node->ahead();
+    delete node;
+
+    scene()->addItem(new_line);
+
+    lines_.insert(new_line);
+}
+
+void WireItem::moveNode(WireNode *node, const QPointF to_pos) {
+    node->setPos(to_pos);
+
+    node->behind()->rebuild();
+    node->ahead()->rebuild();
 }
 
 QPainterPath WireItem::shape() const {
     QPainterPath path{};
 
-    for (const auto &pair : lines_) {
-        const auto &line = pair.second;
-        path.moveTo(line.p1());
-        path.lineTo(line.p2());
+    for (const auto &line : lines_) {
+    //     path.moveTo(line.p1());
+    //     path.lineTo(line.p2());
     }
 
     // расширяем путь что бы допустить промахи
@@ -56,24 +82,6 @@ QRectF WireItem::boundingRect() const {
     return shape().boundingRect();
 }
 
-bool WireItem::empty() const {
-    return lines_.size() < 2 && pins_.size() < 2;
-}
-
-void WireItem::addPin(PinItem *pin) {
-    if (!pins_.insert(pin).second)
-        return; // уже был подключён
-
-    rebuildLines();
-}
-
-void WireItem::removePin(PinItem *pin) {
-    if (pins_.erase(pin) == 0)
-        return; // такого пина и не было
-
-    lines_.erase(pin);
-    rebuildLines();
-}
 
 void WireItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     Q_UNUSED(option);
