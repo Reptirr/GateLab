@@ -57,32 +57,18 @@ void WireItem::removeEndPoint(WireEndPoint *end_point) {
     }
 
     end_points_.erase(end_point);
+
+    if (end_points_.size() == 0) {
+        delete this; // there is no reason to be
+    }
 }
 
 QColor WireItem::color() const {
     return color_;
 }
 
-QPainterPath WireItem::shape() const {
-    // QPainterPath path{};
-    //
-    // std::unordered_set<WireLine*> lines;
-    // for (const auto child : childItems()) {
-    //     path += child->shape();
-    // }
-    //
-    // // расширяем путь что бы допустить промахи
-    // QPainterPathStroker stroker{};
-    //
-    // stroker.setWidth(7);
-    // stroker.setCapStyle(Qt::RoundCap);   // закругленные края
-    // stroker.setJoinStyle(Qt::RoundJoin); // закругленные изломы
-
-    return {};
-}
-
 QRectF WireItem::boundingRect() const {
-    return shape().boundingRect();
+    return childrenBoundingRect();
 }
 void WireItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
 }

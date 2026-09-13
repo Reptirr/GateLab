@@ -27,6 +27,7 @@ public:
     }
     void removeLine(WireLine *line) override {
         conn_ = nullptr;
+        wire_item_ = nullptr; // there is no conn anymore
     }
 
     std::unordered_set<WireLine *> lines() override {

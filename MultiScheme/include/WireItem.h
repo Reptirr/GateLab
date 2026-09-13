@@ -33,7 +33,6 @@ public:
 
     QColor color() const;
 
-    QPainterPath shape() const override;
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     int type() const override;
