@@ -33,10 +33,16 @@ add_library(GateLabCore STATIC
         MultiScheme/include/instant/SourceItem.h
         MultiScheme/src/WireItem.cpp
         Controller/include/LogicComponentsFactory.h
-        GateLogic/include/Utils.h
+        GateLogic/include/LogicUtils.h
         Controller/include/Mode.h
         IDEUI/include/GLToolBar.h
         IDEUI/include/MainWindow.h
+        MultiScheme/include/WireLine.h
+        MultiScheme/include/WireNode.h
+        MultiScheme/include/WireEndpoint.h
+        MultiScheme/src/WireNode.cpp
+        MultiScheme/src/WireLine.cpp
+        MultiScheme/include/Utils.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

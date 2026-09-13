@@ -70,20 +70,20 @@ public slots:
     void onComponentCreateRequest(ComponentItem *component_item) {
         addComponent(component_item);
     }
+    void onComponentRemoveRequest(ComponentItem *component) {
+        removeComponent(component);
+    }
 
     void onWireCreateRequest(PinItem *pin1, PinItem *pin2) {
         addWire({pin1, pin2});
     }
 
-    void onComponentRemoveRequest(ComponentItem *component) {
-        removeComponent(component);
-    }
 
-    void onDrillDownRequest(QGraphicsScene *scene) {
+    void onDrillDownRequest(QGraphicsScene *scene) const {
         main_view_->setScene(scene);
         input_mapper_->setScene(scene);
     }
-    void onDrillUpRequest(QGraphicsScene *scene) {
+    void onDrillUpRequest(QGraphicsScene *scene) const {
         main_view_->setScene(scene);
         input_mapper_->setScene(scene);
     }
@@ -102,25 +102,29 @@ public:
     }
 
     void addWire(const std::vector<PinItem *> &pin_items) {
+        // need 2 pins to connect
+        assert(pin_items.size() >= 2);
+
         // cant connect already connected pins
         for (const auto pin : pin_items) {
-            if (pin->wire()) {
+            if (pin->conn()) {
                 qDebug() << "pin already has a wire";
                 return;
             }
         }
 
         // cant connect the same pins
-        if (const std::unordered_set<PinItem*> temp_map{pin_items.begin(),pin_items.end()}; pin_items.size() != temp_map.size()) {
+        if (const std::unordered_set<PinItem*> temp_map{pin_items.begin(),pin_items.end()};  pin_items.size() != temp_map.size()) {
             qDebug() << "cant connect the same pins";
             return;
         }
 
         // LOGIC: get logic pins and create a wire and set pins for wire & set wire for pins
-        // UI: the same but with ui side
+        // UI: set 2 pins in WireItem constructor, other in cycle
         // no recordings
 
-        auto wire_item = new WireItem{};
+        auto wire_item = new WireItem{pin_items[0], pin_items[1]};
+        main_view_->scene()->addItem(wire_item);
 
         std::vector<std::weak_ptr<LogicPin>> logic_pins{};
         for (auto *pin_item : pin_items) {
@@ -131,16 +135,10 @@ public:
         const auto logic_wire = std::make_shared<LogicWire>(wire_item);
 
         // set pins for wire & wire for pins at logic-side
-        // set pins for wire & wire for pins at ui-side
         for (int i = 0; i < logic_pins.size(); i++) {
-            auto *pin_item = pin_items.at(i);
-            // shared_ptr && raw_ptr
-            if (auto logic_pin = logic_pins.at(i).lock()) {
+            if (auto logic_pin = logic_pins.at(i).lock(); logic_pin) {
                 logic_wire.get()->addPin(logic_pin);
                 logic_pin->setWire(logic_wire);
-
-                wire_item->addPin(pin_item);
-                pin_item->setWire(wire_item);
             }
         }
 

@@ -1,9 +1,8 @@
 #pragma once
 
+#include <LogicUtils.h>
 #include <memory>
 #include <set>
-#include <Utils.h>
-#include <vector>
 
 class WireItem;
 class LogicPin;

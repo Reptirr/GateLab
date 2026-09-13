@@ -7,41 +7,34 @@
 #include <unordered_map>
 
 
+class WireLine;
+class WireNode;
+class WireEndPoint;
 class PinItem;
 class LogicWire;
 
-class WireItem : public QGraphicsItem {
-protected:
-    std::set<PinItem *> pins_;
-    std::unordered_map<PinItem *, QLineF> lines_;
-    QPointF lines_center_{};
 
-private:
+// always need 2 end points
+class WireItem : public QGraphicsItem {
     QColor color_ = QColorConstants::Black;
 
     void setColorBySignal(bool signal);
-
-    // пересчитывает центр (среднее точек всех пинов) и перестраивает
-    // линии центр -> каждый пин
-    void rebuildLines();
-
     friend LogicWire;
 
+    // graph
+    std::unordered_set<WireEndPoint *> end_points_;
+
 public:
-    WireItem() = default;
+    WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2);
+
+    void createNode(const WireLine *on_line, QPointF pos);
+
+    void removeEndPoint(WireEndPoint *end_point);
+
+    QColor color() const;
 
     QPainterPath shape() const override;
     QRectF boundingRect() const override;
-
-    bool empty() const;
-
-    void addPin(PinItem *pin);
-    void removePin(PinItem *pin);
-
-    std::set<PinItem*> pins() {
-        return pins_;
-    }
-
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     int type() const override;
 };
