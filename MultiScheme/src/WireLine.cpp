@@ -52,12 +52,14 @@ WireItem * WireLine::wire() const {
 }
 
 void WireLine::rebuild() {
+    prepareGeometryChange();
+
     line_ = {
         parent_wire_->mapFromScene(centerPos(from_->scenePos(), from_->boundingRect().size())),
         parent_wire_->mapFromScene(centerPos(to_->scenePos(), to_->boundingRect().size()))
     };
 
-
+    update();
 }
 
 QPainterPath WireLine::shape() const {
