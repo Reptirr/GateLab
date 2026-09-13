@@ -58,7 +58,7 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
 
 void InputMapper::onMousePress(const QMouseEvent *e) {
     if (const auto wireCreating = std::get_if<WireCreating>(&mode_)) {
-        auto *pin_item = getItem<WireEndPoint*>(e->pos());
+        auto *pin_item = getItem<PinItem*>(e->pos());
         if (pin_item == nullptr) {
             qDebug() << "get mouse press not at end point";
             return;
