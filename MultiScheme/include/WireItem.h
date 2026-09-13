@@ -28,7 +28,6 @@ public:
     WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2);
 
     void createNode(const WireLine *on_line, QPointF pos);
-
     void removeEndPoint(WireEndPoint *end_point);
 
     QColor color() const;
@@ -36,4 +35,6 @@ public:
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     int type() const override;
+
+    ~WireItem() override;
 };

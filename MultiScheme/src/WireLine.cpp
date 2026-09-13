@@ -70,7 +70,7 @@ QPainterPath WireLine::shape() const {
 
     QPainterPathStroker stroker;
     stroker.setWidth(2);
-    stroker.setCapStyle(Qt::RoundCap);
+    stroker.setCapStyle(Qt::FlatCap);
 
     return stroker.createStroke(path);
 }

@@ -36,13 +36,21 @@ std::unordered_set<WireLine *> WireNode::lines() {
 }
 
 QRectF WireNode::boundingRect() const {
-    return {0, 0, width_, height_}; // !!!
+    return QRectF{0, 0, width_, height_}.adjusted(-2, -2, 2, 2);
 }
 
 void WireNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    QPen pen;
-    // pen.setColor(QColorConstants::Black.);
+    QBrush brush;
+    brush.setColor(QColorConstants::DarkCyan);
+    brush.setStyle(Qt::SolidPattern);
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(brush);
 
     painter->drawEllipse(QRectF{0, 0, width_, height_});
+}
+
+WireNode::~WireNode() {
+    for (const auto *line : lines_) line->removeWireEndpoint();
 }
 

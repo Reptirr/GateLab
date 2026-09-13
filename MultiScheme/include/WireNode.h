@@ -7,8 +7,8 @@ class WireLine;
 class WireNode : public WireEndPoint {
     std::unordered_set<WireLine *> lines_;
 
-    qreal width_ = 30;
-    qreal height_ = 30;
+    qreal width_ = 15;
+    qreal height_ = 15;
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -25,4 +25,5 @@ public:
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
+    ~WireNode() override;
 };

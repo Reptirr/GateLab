@@ -50,15 +50,14 @@ void WireItem::createNode(const WireLine *on_line, const QPointF pos) {
 void WireItem::removeEndPoint(WireEndPoint *end_point) {
     assert(end_points_.contains(end_point));
 
-    for (WireLine *line :
-        end_point->lines()) {
+    for (WireLine *line : end_point->lines()) {
         line->removeWireEndpoint();
         end_point->removeLine(line);
     }
 
     end_points_.erase(end_point);
 
-    if (end_points_.size() == 0) {
+    if (end_points_.size() <= 1) {
         delete this; // there is no reason to be
     }
 }
@@ -75,4 +74,12 @@ void WireItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
 int WireItem::type() const {
     return WireType;
+}
+
+WireItem::~WireItem() {
+    for (auto *end_point : end_points_) {
+        if (const auto node = dynamic_cast<WireNode *>(end_point)) {
+            delete node;
+        }
+    }
 }
