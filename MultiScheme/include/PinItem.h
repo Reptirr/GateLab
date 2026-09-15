@@ -20,7 +20,8 @@ public:
 
 
     void addLine(WireLine *line) override {
-        if (wire_item_) assert(wire_item_ == line->wire());
+        if (wire_item_)
+            assert(wire_item_ == line->wire());
 
         wire_item_ = line->wire();
         conn_ = line;
@@ -31,15 +32,25 @@ public:
     }
 
     std::unordered_set<WireLine *> lines() override {
-        return {conn_};
+        // imitation
+        if (conn_) return {conn_};
+        else return {};
     }
     WireLine *conn() const {
         return conn_;
     }
 
+    void clearLines() override {
+        if (conn_) {
+            conn_->removeWireEndpoint();
+            conn_ = nullptr;
+        }
+    }
+
     QRectF boundingRect() const override {
         return QRectF{0, 0, width_, height_};
     }
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
         // make a border
         QPen pen(QColorConstants::Black);

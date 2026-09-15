@@ -5,10 +5,12 @@
 class WireLine;
 
 class WireNode : public WireEndPoint {
-    std::unordered_set<WireLine *> lines_;
+    std::unordered_set<WireLine *> lines_{};
 
     qreal width_ = 15;
     qreal height_ = 15;
+
+    QPointF last_mouse_pos_{};
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -16,9 +18,13 @@ protected:
 
 public:
     explicit WireNode(WireItem *parent_wire);
+    explicit WireNode();
 
     void addLine(WireLine *line) override;
     void removeLine(WireLine *line) override;
+    void clearLines() override;
+
+    void move(QPointF pos);
 
     std::unordered_set<WireLine *> lines() override;
 
@@ -26,4 +32,6 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
     ~WireNode() override;
+
+
 };

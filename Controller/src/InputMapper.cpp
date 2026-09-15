@@ -5,6 +5,7 @@
 #include <ComponentItem.h>
 #include <algorithm>
 #include <Controller.h>
+#include <WireNode.h>
 #include <instant/TransistorItem.h>
 
 static QPointF createCenterPos(const QPointF top_left, const QSizeF &rect) {
@@ -53,57 +54,80 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
 
             default: break;
         }
+    } else if (const auto wireCreating = std::get_if<WireCreating>(&mode_)) {
+        switch (keyEvent->key()) {
+            case Qt::Key_Q:
+            case Qt::Key_Escape:
+                // remove current node (remove from wire_item itself)
+                delete wireCreating->current_node;
+
+                wireCreating->reset();
+                break;
+
+            default: break;
+        }
     }
 }
 
 void InputMapper::onMousePress(const QMouseEvent *e) {
     if (const auto wireCreating = std::get_if<WireCreating>(&mode_)) {
-        auto *pin_item = getItem<PinItem*>(e->pos());
-        if (pin_item == nullptr) {
-            qDebug() << "get mouse press not at end point";
-            return;
+        // we firstly get press at PinItem,
+        // after we produce WireNodes of presses, ()
+        // and close creating after press at PinItem
+
+        auto *pin_item = getItem<PinItem *>(e->pos());
+
+        // start create
+        if (pin_item && wireCreating->wire_item == nullptr) {
+            if (pin_item->lines().size()) {
+                qDebug() << "pin item already has a line (wire)";
+                return;
+            }
+
+            // create wire_item & node at mousePos
+
+            auto *node = new WireNode();
+            node->setPos(e->pos()-node->boundingRect().center());
+            scene_->addItem(node);
+
+            emit wireCreateRequest(pin_item, node);
+
+            wireCreating->wire_item = pin_item->parentWire();
+
+            node->setParentWire(wireCreating->wire_item);
+
+            wireCreating->last_end_point = pin_item;
+            wireCreating->current_node = node;
         }
+        // produce nodes
+        else if (!pin_item && wireCreating->wire_item != nullptr) {
+            auto *node = new WireNode(wireCreating->wire_item);
+            node->setPos(e->pos()-node->boundingRect().center());
 
-        // start wire creating
-        if (wireCreating->selected_pin == nullptr) {
-            qDebug() << "start wire creating";
+            wireCreating->wire_item->createLine(wireCreating->current_node, node);
 
-            wireCreating->selected_pin = pin_item;
-
-            const auto line = QLineF{
-                getCenterPos(wireCreating->selected_pin->scenePos(), wireCreating->selected_pin->boundingRect().size()),
-                e->pos()
-            };
-
-            wireCreating->line_item = new QGraphicsLineItem{line};
-            scene_->addItem(wireCreating->line_item);
+            wireCreating->last_end_point = wireCreating->current_node;
+            wireCreating->current_node = node;
         }
-        // end wire creating
-        else {
-            qDebug() << "end wire creating";
+        // end creating
+        else if (pin_item && wireCreating->wire_item != nullptr) {
 
-            emit wireCreateRequest(pin_item, wireCreating->selected_pin);
+            wireCreating->wire_item->createLine(wireCreating->current_node, pin_item); // create line: last_point <-> current_node <-> pin_item
+            wireCreating->wire_item->removeNode(wireCreating->current_node); // collapse line: last_point <-> pin_item
 
-            // reset mode values
             wireCreating->reset();
+        } else {
+            assert(true); // in tests we will check situations when it is execute
         }
     }
 }
 
 void InputMapper::onMouseMove(const QMouseEvent *e) const {
     if (const auto wireCreating = std::get_if<WireCreating>(&mode_)) {
-        auto *line = wireCreating->line_item;
-
-        if (!line) return; // there is no line to rebuild
-
-        qDebug() << "pin pos: " << wireCreating->selected_pin->scenePos();
-
-        line->setLine(
-            QLineF{
-                getCenterPos(wireCreating->selected_pin->scenePos(), wireCreating->selected_pin->boundingRect().size()),
-                e->pos()
-            }
-        );
+        // move node while we create it
+        if (wireCreating->current_node) {
+            wireCreating->current_node->move(e->pos()-wireCreating->current_node->boundingRect().center());
+        }
     }
 }
 

@@ -16,5 +16,15 @@ public:
     virtual void addLine(WireLine *line) = 0;
     virtual void removeLine(WireLine *line) = 0;
 
+    virtual void clearLines() = 0;
+
+    void setParentWire(WireItem *wire) {
+        wire_item_ = wire;
+    }
+
+    WireItem *parentWire() const {
+        return wire_item_;
+    }
+
     virtual std::unordered_set<WireLine *> lines() = 0;
 };

@@ -14,8 +14,8 @@ WireLine::WireLine(WireEndPoint *from, WireEndPoint *to, WireItem *parent_wire) 
     setAcceptHoverEvents(true);
 
     line_ = {
-        parent_wire->mapFromScene(centerPos(from->scenePos(), from->boundingRect().size())),
-        parent_wire->mapFromScene(centerPos(to->scenePos(), to->boundingRect().size()))
+        parent_wire->mapFromItem(from, from->boundingRect().center()),
+        parent_wire->mapFromItem(to, to->boundingRect().center())
     };
 
     romb_ = new QGraphicsPolygonItem{{}, this};
@@ -55,8 +55,8 @@ void WireLine::rebuild() {
     prepareGeometryChange();
 
     line_ = {
-        parent_wire_->mapFromScene(centerPos(from_->scenePos(), from_->boundingRect().size())),
-        parent_wire_->mapFromScene(centerPos(to_->scenePos(), to_->boundingRect().size()))
+        parent_wire_->mapFromItem(from_, from_->boundingRect().center()),
+        parent_wire_->mapFromItem(to_, to_->boundingRect().center())
     };
 
     update();
@@ -69,7 +69,7 @@ QPainterPath WireLine::shape() const {
     path.lineTo(line_.p2());
 
     QPainterPathStroker stroker;
-    stroker.setWidth(2);
+    stroker.setWidth(3);
     stroker.setCapStyle(Qt::FlatCap);
 
     return stroker.createStroke(path);
@@ -111,6 +111,8 @@ void WireLine::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
 }
 
 void WireLine::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    event->accept();
+    ungrabMouse();
     parent_wire_->createNode(this, event->scenePos()); // after that this is deleting
 }
 

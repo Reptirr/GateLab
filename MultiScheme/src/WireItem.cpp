@@ -47,6 +47,23 @@ void WireItem::createNode(const WireLine *on_line, const QPointF pos) {
     end_points_.insert(node);
 }
 
+void WireItem::removeNode(WireNode *node) {
+    assert(node->lines().size() == 2); // because we can remove node only between 2 lines and combine they
+
+    auto lines = node->lines();
+    auto it = lines.begin();
+    const auto line1 = *it;
+    const auto line2 = *++it;
+
+    auto *point1 = line1->from() != node ? line1->from() : line1->to(); // if line1::from is not deleting node => other is
+    auto *point2 = line2->from() != node ? line2->from() : line2->to();
+
+    delete node; // there is no reason to have it
+    end_points_.erase(point2); // because it is now disconnect from wire graph
+
+    createLine(point1, point2);
+}
+
 void WireItem::removeEndPoint(WireEndPoint *end_point) {
     assert(end_points_.contains(end_point));
 
@@ -60,6 +77,17 @@ void WireItem::removeEndPoint(WireEndPoint *end_point) {
     if (end_points_.size() <= 1) {
         delete this; // there is no reason to be
     }
+}
+
+void WireItem::createLine(WireEndPoint *from, WireEndPoint *to) {
+    assert(end_points_.contains(from) && !end_points_.contains(to));
+
+    end_points_.insert(to);
+
+    auto *line = new WireLine(from, to, this);
+
+    from->addLine(line);
+    to->addLine(line);
 }
 
 QColor WireItem::color() const {

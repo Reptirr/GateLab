@@ -64,8 +64,6 @@ target_link_libraries(GateLab PRIVATE GateLabCore)
 target_link_options(GateLabCore PRIVATE -fuse-ld=lld)
 target_precompile_headers(GateLab PRIVATE
         <QWidget>
-        <QObject>
-        <QString>
         <QGraphicsScene>
         <QGraphicsItem>
 )

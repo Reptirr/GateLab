@@ -38,6 +38,7 @@ class Controller : public QObject {
     InputMapper *input_mapper_;
 
     std::unordered_map<PinItem*, std::weak_ptr<LogicPin>> pins_;
+    std::unordered_map<WireItem*, std::weak_ptr<LogicWire>> wires_;
     std::unordered_map<ComponentItem*, std::shared_ptr<LogicComponent>> black_box_components_; // for component removing
 
     std::set<ComponentItem*> drillable_components_;
@@ -74,8 +75,8 @@ public slots:
         removeComponent(component);
     }
 
-    void onWireCreateRequest(PinItem *pin1, PinItem *pin2) {
-        addWire({pin1, pin2});
+    void onWireCreateRequest(WireEndPoint *point1, WireEndPoint *point2) {
+        addWire({point1, point2});
     }
 
 
@@ -101,20 +102,20 @@ public:
         return input_mapper_;
     }
 
-    void addWire(const std::vector<PinItem *> &pin_items) {
+    void addWire(const std::vector<WireEndPoint *> &point_items) {
         // need 2 pins to connect
-        assert(pin_items.size() >= 2);
+        assert(point_items.size() >= 2);
 
         // cant connect already connected pins
-        for (const auto pin : pin_items) {
-            if (pin->conn()) {
+        for (const auto point : point_items) {
+            if (point->lines().size()) {
                 qDebug() << "pin already has a wire";
                 return;
             }
         }
 
         // cant connect the same pins
-        if (const std::unordered_set<PinItem*> temp_map{pin_items.begin(),pin_items.end()};  pin_items.size() != temp_map.size()) {
+        if (const std::unordered_set<WireEndPoint*> temp_map{point_items.begin(),point_items.end()};  point_items.size() != temp_map.size()) {
             qDebug() << "cant connect the same pins";
             return;
         }
@@ -123,12 +124,13 @@ public:
         // UI: set 2 pins in WireItem constructor, other in cycle
         // no recordings
 
-        auto wire_item = new WireItem{pin_items[0], pin_items[1]};
+        auto *wire_item = new WireItem{point_items[0], point_items[1]};
         main_view_->scene()->addItem(wire_item);
 
         std::vector<std::weak_ptr<LogicPin>> logic_pins{};
-        for (auto *pin_item : pin_items) {
-            logic_pins.push_back(pins_[pin_item]);
+        for (auto *point_item : point_items) {
+            if (auto *pin_item = dynamic_cast<PinItem *>(point_item))
+                logic_pins.push_back(pins_[pin_item]);
         }
 
         // temp
@@ -144,6 +146,36 @@ public:
 
         // add item to scene
         main_view_->scene()->addItem(wire_item);
+
+        // add recording
+        wires_.insert({wire_item, logic_wire});
+    }
+
+    void addPinWire(WireItem *wire_item, PinItem* pin_item) const {
+        const auto logic_pin = pins_.at(pin_item);
+        const auto logic_wire = wires_.at(wire_item);
+
+        const auto sh_pin = logic_pin.lock();
+        const auto sh_wire = logic_wire.lock();
+
+        if (sh_pin && sh_wire) {
+            sh_pin->setWire(sh_wire);
+            sh_wire->addPin(sh_pin);
+        }
+    }
+    void removePinWire(WireItem *wire_item, PinItem* pin_item) const {
+        const auto logic_pin = pins_.at(pin_item);
+        const auto logic_wire = wires_.at(wire_item);
+
+
+
+        const auto sh_pin = logic_pin.lock();
+        const auto sh_wire = logic_wire.lock();
+
+        if (sh_wire && sh_pin) {
+            sh_pin->removeWire();
+            sh_wire->removePin(sh_pin);
+        }
     }
 
     void addComponent(ComponentItem *component_item) {

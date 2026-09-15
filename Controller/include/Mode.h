@@ -9,13 +9,17 @@ enum class EditMode {
 Q_DECLARE_METATYPE(EditMode)
 
 struct WireCreating  {
-    PinItem *selected_pin{};
-    QGraphicsLineItem *line_item{};
+    // for logic create
+    WireItem *wire_item;
+    WireEndPoint *last_end_point;
+
+    // for moving while create
+    WireNode *current_node;
 
     void reset() {
-        selected_pin = nullptr;
-        if (line_item) delete line_item;
-        line_item = nullptr;
+        wire_item = nullptr;
+        last_end_point = nullptr;
+        current_node = nullptr;
     }
 
     ~WireCreating() {
@@ -33,8 +37,8 @@ class Mode : public std::variant<ComponentEdit, WireCreating> {
 
 public:
     Mode() : Base(ComponentEdit{}) {}
-    Mode(WireCreating wire_creating) : Base(wire_creating) {}
-    Mode(ComponentEdit component_edit) : Base(component_edit) {}
+    explicit Mode(WireCreating wire_creating) : Base(wire_creating) {}
+    explicit Mode(ComponentEdit component_edit) : Base(component_edit) {}
 
     void emplaceByEnum(const EditMode edit_mode) {
         switch (edit_mode) {
