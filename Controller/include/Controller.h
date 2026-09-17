@@ -183,7 +183,8 @@ public:
             sh_wire->removePin(sh_pin);
         }
 
-        wire_item->removeEndPoint(pin_item);
+        if (wire_item->removeEndPoint(pin_item))
+            wires_.erase(wire_item);
     }
 
     void addComponent(ComponentItem *component_item) {

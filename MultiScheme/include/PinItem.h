@@ -47,6 +47,13 @@ public:
             conn_ = nullptr;
         }
     }
+    void disconnect() override {
+        conn_ = nullptr;
+    }
+
+    void rebuildLine() const {
+        if (conn_) conn_->rebuild();
+    }
 
     QRectF boundingRect() const override {
         return QRectF{0, 0, width_, height_};

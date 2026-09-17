@@ -7,16 +7,12 @@
 
 
 void WireNode::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-    last_mouse_pos_ = event->pos();
+    move_helper_.onMousePress(event->scenePos());
     event->accept();
 }
 
 void WireNode::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
-    const QPointF delta = event->pos() - last_mouse_pos_;
-
-    setPos(pos()+delta);
-
-    for (auto *line : lines_) line->rebuild();
+    move(move_helper_.onMouseMove(scenePos(), event->scenePos()));
 }
 
 WireNode::WireNode(WireItem *parent_wire) : WireEndPoint(parent_wire) {
@@ -43,6 +39,11 @@ void WireNode::clearLines() {
         line->removeWireEndpoint();
     }
     lines_.clear();
+}
+
+void WireNode::disconnect() {
+    wire_item_ = nullptr;
+    delete this;
 }
 
 void WireNode::move(const QPointF pos) {

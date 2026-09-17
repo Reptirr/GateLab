@@ -16,6 +16,8 @@ void LogicWire::handle() {
         }
     );
 
+    if (pins_.size() == 0) return;
+
     bool signal{};
 
     for (auto pin__ : pins_) {

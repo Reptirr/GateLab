@@ -44,6 +44,7 @@ add_library(GateLabCore STATIC
         MultiScheme/src/WireLine.cpp
         MultiScheme/include/Utils.h
         my_assert.h
+        MultiScheme/include/MoveHelper.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

@@ -1,4 +1,5 @@
 #pragma once
+#include <MoveHelper.h>
 #include <QGraphicsItem>
 #include <WireEndpoint.h>
 
@@ -10,12 +11,13 @@ class WireNode : public WireEndPoint {
     qreal width_ = 15;
     qreal height_ = 15;
 
-    QPointF last_mouse_pos_{};
-
     WireLine *process_line_{};
+
+    MoveHelper move_helper_;
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
 
 public:
@@ -25,6 +27,7 @@ public:
     void addLine(WireLine *line) override;
     void removeLine(WireLine *line) override;
     void clearLines() override;
+    void disconnect() override;
 
     void move(QPointF pos);
 
@@ -34,6 +37,5 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
     ~WireNode() override;
-
 
 };

@@ -113,7 +113,7 @@ void WireLine::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
 void WireLine::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     event->accept();
     ungrabMouse();
-    parent_wire_->createNode(this, event->scenePos()); // after that this is deleting
+    parent_wire_->divideLine(this, event->scenePos()); // after that this is deleting
 }
 
 

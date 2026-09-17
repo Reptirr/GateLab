@@ -17,6 +17,7 @@ public:
     virtual void removeLine(WireLine *line) = 0;
 
     virtual void clearLines() = 0;
+    virtual void disconnect() = 0;
 
     void setParentWire(WireItem *wire) {
         wire_item_ = wire;

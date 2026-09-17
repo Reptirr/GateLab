@@ -11,11 +11,14 @@ void WireItem::setColorBySignal(bool signal = false) {
     update();
 }
 
-void WireItem::notifyEndPointDelete() const {
+bool WireItem::notifyEndPointDelete() const {
     if (end_points_.size() <= 1) {
         // delete wire if it is only 1 end_point. logic pin is already need be deleted at that moment
         delete this;
+        return true;
     }
+
+    return false;
 }
 
 WireItem::WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2) {
@@ -35,7 +38,7 @@ WireItem::WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2) {
     end_point1->scene()->addItem(line);
 }
 
-void WireItem::createNode(const WireLine *on_line, const QPointF pos) {
+void WireItem::divideLine(const WireLine *on_line, const QPointF pos) {
     // slice line to 2 ones and node between they
 
     auto *from = on_line->from();
@@ -55,8 +58,8 @@ void WireItem::createNode(const WireLine *on_line, const QPointF pos) {
     end_points_.insert(node);
 }
 
-void WireItem::collapseNode(WireNode *node) {
-    my_assert(node->lines().size() == 2); // because we can remove node only between 2 lines and combine they
+bool WireItem::collapseNode(WireNode *node) {
+    if (node->lines().size() != 2) return false;
 
     auto lines = node->lines();
     auto it = lines.begin();
@@ -72,16 +75,20 @@ void WireItem::collapseNode(WireNode *node) {
     end_points_.erase(point2); // because it is now disconnect from wire graph
 
     createLine(point1, point2);
+
+    return true;
 }
 
-void WireItem::removeEndPoint(WireEndPoint *end_point) {
-    if (!end_points_.contains(end_point)) return;
+bool WireItem::removeEndPoint(WireEndPoint *end_point) {
+    my_assert(end_points_.contains(end_point));
 
     end_point->clearLines();
 
     end_points_.erase(end_point);
 
-    notifyEndPointDelete();
+    end_point->disconnect();
+
+    return notifyEndPointDelete();
 }
 
 void WireItem::createLine(WireEndPoint *from, WireEndPoint *to) {

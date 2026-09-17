@@ -65,6 +65,24 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
                 wireCreating->reset();
                 break;
 
+            case Qt::Key_D: {
+                auto *node = getItem<WireNode *>(mousePos);
+                if (node == nullptr) return;
+
+                auto wire_item = node->parentWire();
+                if (wire_item == nullptr) {
+                    delete node;
+                    break;
+                }
+
+                // collapse or just remove
+                if (!wire_item->collapseNode(node)) {
+                    wire_item->removeEndPoint(node);
+                }
+
+                break;
+            }
+
             default: break;
         }
     }
