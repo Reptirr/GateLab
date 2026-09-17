@@ -61,6 +61,10 @@ class Controller : public QObject {
                 this, &Controller::onDrillUpRequest);
         connect(input_mapper_, &InputMapper::wireCreateRequest, // wire-create
                 this, &Controller::onWireCreateRequest);
+        connect(input_mapper_, &InputMapper::addPinToWireRequest, // pin-add
+                this, &Controller::onAddPinToWireRequest);
+        connect(input_mapper_, &InputMapper::removePinFromWireRequest, //pin-remove
+                this, &Controller::onRemovePinFromWireRequest);
         connect(input_mapper_, &InputMapper::componentRemoveRequest, // component-delete
                 this, &Controller::onComponentRemoveRequest);
         connect(input_mapper_, &InputMapper::componentCreateRequest,
@@ -77,6 +81,12 @@ public slots:
 
     void onWireCreateRequest(WireEndPoint *point1, WireEndPoint *point2) {
         addWire({point1, point2});
+    }
+    void onAddPinToWireRequest(WireItem *wire_item, PinItem *pin_item) const {
+        addPinToWire(wire_item, pin_item);
+    }
+    void onRemovePinFromWireRequest(WireItem *wire_item, PinItem *pin_item) {
+        removePinFromWire(wire_item, pin_item);
     }
 
 
@@ -104,7 +114,7 @@ public:
 
     void addWire(const std::vector<WireEndPoint *> &point_items) {
         // need 2 pins to connect
-        assert(point_items.size() >= 2);
+        my_assert(point_items.size() >= 2);
 
         // cant connect already connected pins
         for (const auto point : point_items) {
@@ -128,30 +138,30 @@ public:
         main_view_->scene()->addItem(wire_item);
 
         std::vector<std::weak_ptr<LogicPin>> logic_pins{};
+        std::vector<PinItem *> pin_items{};
         for (auto *point_item : point_items) {
-            if (auto *pin_item = dynamic_cast<PinItem *>(point_item))
+            if (auto *pin_item = dynamic_cast<PinItem *>(point_item)) {
                 logic_pins.push_back(pins_[pin_item]);
+                pin_items.push_back(pin_item);
+            }
         }
 
-        // temp
-        const auto logic_wire = std::make_shared<LogicWire>(wire_item);
+        // temp hook for addPinToWire
+        auto logic_wire = std::make_shared<LogicWire>(wire_item);
+
+        // add recording
+        wires_.insert({wire_item, logic_wire});
 
         // set pins for wire & wire for pins at logic-side
-        for (int i = 0; i < logic_pins.size(); i++) {
-            if (auto logic_pin = logic_pins.at(i).lock(); logic_pin) {
-                logic_wire.get()->addPin(logic_pin);
-                logic_pin->setWire(logic_wire);
-            }
+        for (auto *pin_item : pin_items) {
+            addPinToWire(wire_item, pin_item);
         }
 
         // add item to scene
         main_view_->scene()->addItem(wire_item);
-
-        // add recording
-        wires_.insert({wire_item, logic_wire});
     }
 
-    void addPinWire(WireItem *wire_item, PinItem* pin_item) const {
+    void addPinToWire(WireItem *wire_item, PinItem* pin_item) const {
         const auto logic_pin = pins_.at(pin_item);
         const auto logic_wire = wires_.at(wire_item);
 
@@ -163,19 +173,17 @@ public:
             sh_wire->addPin(sh_pin);
         }
     }
-    void removePinWire(WireItem *wire_item, PinItem* pin_item) const {
-        const auto logic_pin = pins_.at(pin_item);
-        const auto logic_wire = wires_.at(wire_item);
 
-
-
-        const auto sh_pin = logic_pin.lock();
-        const auto sh_wire = logic_wire.lock();
+    void removePinFromWire(WireItem *wire_item, PinItem* pin_item) {
+        const auto sh_pin =  pins_.at(pin_item).lock();
+        const auto sh_wire = wires_.at(wire_item).lock();
 
         if (sh_wire && sh_pin) {
             sh_pin->removeWire();
             sh_wire->removePin(sh_pin);
         }
+
+        wire_item->removeEndPoint(pin_item);
     }
 
     void addComponent(ComponentItem *component_item) {
@@ -209,13 +217,16 @@ public:
         // UI: just delete component_item. after that it will call destructors of pins and them will remove pin from their wires
         // also remove recordings of component and pins
 
-        // reset hook on logic_component
-        black_box_components_.extract(component_item).mapped().reset();
-
-        // remove pins recording
+        // remove item_pins
         for (auto *pin : component_item->pins()) {
+            if (pin->parentWire())
+                removePinFromWire(pin->parentWire(), pin);
+
             pins_.erase(pin);
         }
+
+        // reset hook on logic_component
+        black_box_components_.extract(component_item).mapped().reset();
 
         delete component_item;
     }

@@ -5,6 +5,7 @@
 #include <ComponentItem.h>
 #include <algorithm>
 #include <Controller.h>
+#include <my_assert.h>
 #include <WireNode.h>
 #include <instant/TransistorItem.h>
 
@@ -112,12 +113,14 @@ void InputMapper::onMousePress(const QMouseEvent *e) {
         // end creating
         else if (pin_item && wireCreating->wire_item != nullptr) {
 
-            wireCreating->wire_item->createLine(wireCreating->current_node, pin_item); // create line: last_point <-> current_node <-> pin_item
-            wireCreating->wire_item->removeNode(wireCreating->current_node); // collapse line: last_point <-> pin_item
+            wireCreating->wire_item->createLine(wireCreating->current_node, pin_item);
+            wireCreating->wire_item->collapseNode(wireCreating->current_node);
+
+            emit addPinToWireRequest(wireCreating->wire_item, pin_item);
 
             wireCreating->reset();
         } else {
-            assert(true); // in tests we will check situations when it is execute
+            my_assert(true); // in tests we will check situations when it is execute
         }
     }
 }

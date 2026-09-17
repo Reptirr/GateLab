@@ -25,6 +25,8 @@ public:
     }
 
     ~ComponentItem() override {
+        qDebug() << "component_item delete";
+
         // delete pins
         for (const auto *pin : pins_) {
             delete pin;

@@ -1,3 +1,4 @@
+#include <my_assert.h>
 #include <WireItem.h>
 
 #include <PinItem.h>
@@ -10,8 +11,15 @@ void WireItem::setColorBySignal(bool signal = false) {
     update();
 }
 
+void WireItem::notifyEndPointDelete() const {
+    if (end_points_.size() <= 1) {
+        // delete wire if it is only 1 end_point. logic pin is already need be deleted at that moment
+        delete this;
+    }
+}
+
 WireItem::WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2) {
-    assert(end_point1->scene() == end_point2->scene());
+    my_assert(end_point1->scene() == end_point2->scene());
 
     setZValue(WireZValue);
 
@@ -47,8 +55,8 @@ void WireItem::createNode(const WireLine *on_line, const QPointF pos) {
     end_points_.insert(node);
 }
 
-void WireItem::removeNode(WireNode *node) {
-    assert(node->lines().size() == 2); // because we can remove node only between 2 lines and combine they
+void WireItem::collapseNode(WireNode *node) {
+    my_assert(node->lines().size() == 2); // because we can remove node only between 2 lines and combine they
 
     auto lines = node->lines();
     auto it = lines.begin();
@@ -58,29 +66,26 @@ void WireItem::removeNode(WireNode *node) {
     auto *point1 = line1->from() != node ? line1->from() : line1->to(); // if line1::from is not deleting node => other is
     auto *point2 = line2->from() != node ? line2->from() : line2->to();
 
-    delete node; // there is no reason to have it
+    // we cant call removeEndPoint because it will call notifyEndPointDelete and wire_item will delete
+    delete node;
+    end_points_.erase(node); // we deleted & disconnected it
     end_points_.erase(point2); // because it is now disconnect from wire graph
 
     createLine(point1, point2);
 }
 
 void WireItem::removeEndPoint(WireEndPoint *end_point) {
-    assert(end_points_.contains(end_point));
+    if (!end_points_.contains(end_point)) return;
 
-    for (WireLine *line : end_point->lines()) {
-        line->removeWireEndpoint();
-        end_point->removeLine(line);
-    }
+    end_point->clearLines();
 
     end_points_.erase(end_point);
 
-    if (end_points_.size() <= 1) {
-        delete this; // there is no reason to be
-    }
+    notifyEndPointDelete();
 }
 
 void WireItem::createLine(WireEndPoint *from, WireEndPoint *to) {
-    assert(end_points_.contains(from) && !end_points_.contains(to));
+    my_assert(end_points_.contains(from) && !end_points_.contains(to));
 
     end_points_.insert(to);
 
@@ -94,6 +99,17 @@ QColor WireItem::color() const {
     return color_;
 }
 
+bool WireItem::empty() const {
+    if (end_points_.size() == 0) return true;
+    if (end_points_.size() > 1) return false;
+
+    auto *end_point = *end_points_.begin();
+    if (auto pin = dynamic_cast<PinItem *>(end_point)) {
+        return false;
+    }
+    return true;
+}
+
 QRectF WireItem::boundingRect() const {
     return childrenBoundingRect();
 }
@@ -105,9 +121,13 @@ int WireItem::type() const {
 }
 
 WireItem::~WireItem() {
+    qDebug() << "wire_item delete";
+
     for (auto *end_point : end_points_) {
-        if (const auto node = dynamic_cast<WireNode *>(end_point)) {
-            delete node;
+        if (auto *pin = dynamic_cast<PinItem *>(end_point)) {
+            pin->clearLines();
+        } else {
+            delete end_point;
         }
     }
 }

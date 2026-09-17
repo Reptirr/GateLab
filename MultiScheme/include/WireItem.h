@@ -24,16 +24,20 @@ class WireItem : public QGraphicsItem {
     // graph
     std::unordered_set<WireEndPoint *> end_points_;
 
+    // deleting
+    void notifyEndPointDelete() const;
+
 public:
     WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2);
 
     void createNode(const WireLine *on_line, QPointF pos); // create node on line
-    void removeNode(WireNode *node); // remove node and combine 2 lines to 1
+    void collapseNode(WireNode *node); // remove node and combine 2 lines to 1
     void removeEndPoint(WireEndPoint *end_point);
 
     void createLine(WireEndPoint *from, WireEndPoint *to); // create line from our node to other end_point
 
     QColor color() const;
+    bool empty() const;
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;

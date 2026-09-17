@@ -1,4 +1,5 @@
 #pragma once
+#include <my_assert.h>
 #include <qpainter.h>
 #include <UIConstants.h>
 #include <WireItem.h>
@@ -21,7 +22,7 @@ public:
 
     void addLine(WireLine *line) override {
         if (wire_item_)
-            assert(wire_item_ == line->wire());
+            my_assert(wire_item_ == line->wire());
 
         wire_item_ = line->wire();
         conn_ = line;
@@ -65,6 +66,8 @@ public:
     }
 
     ~PinItem() override {
-        if (wire_item_) wire_item_->removeEndPoint(this);
+        qDebug() << "pin_item delete";
+
+        if (conn_) conn_->removeWireEndpoint();
     }
 };

@@ -12,6 +12,8 @@ class WireNode : public WireEndPoint {
 
     QPointF last_mouse_pos_{};
 
+    WireLine *process_line_{};
+
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;

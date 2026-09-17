@@ -12,8 +12,6 @@ void WireNode::mousePressEvent(QGraphicsSceneMouseEvent *event) {
 }
 
 void WireNode::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
-    qDebug() << "mouseMoveEvent in WireNode";
-
     const QPointF delta = event->pos() - last_mouse_pos_;
 
     setPos(pos()+delta);
@@ -35,14 +33,16 @@ void WireNode::addLine(WireLine *line) {
 }
 
 void WireNode::removeLine(WireLine *line) {
+    if (process_line_ == line) return;
     lines_.erase(line);
 }
 
 void WireNode::clearLines() {
-    for (const auto *line : lines_) {
+    for (auto *line : lines_) {
+        process_line_ = line;
         line->removeWireEndpoint();
-        line = nullptr;
     }
+    lines_.clear();
 }
 
 void WireNode::move(const QPointF pos) {
@@ -70,6 +70,6 @@ void WireNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 }
 
 WireNode::~WireNode() {
-    wire_item_->removeEndPoint(this);
+    WireNode::clearLines();
 }
 

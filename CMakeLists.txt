@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3)
+cmake_minimum_required(VERSION 4.2.)
 project(GateLab)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -43,6 +43,7 @@ add_library(GateLabCore STATIC
         MultiScheme/src/WireNode.cpp
         MultiScheme/src/WireLine.cpp
         MultiScheme/include/Utils.h
+        my_assert.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
@@ -56,10 +57,16 @@ target_include_directories(GateLabCore PUBLIC
         GateLogic/include
         Controller/include
         IDEUI/include
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_executable(GateLab main.cpp)
 target_link_libraries(GateLab PRIVATE GateLabCore)
+
+if(MINGW)
+    add_compile_options(-g -gdwarf-2 -fno-omit-frame-pointer)
+    add_link_options(-static-libgcc -static-libstdc++)
+endif()
 
 target_link_options(GateLabCore PRIVATE -fuse-ld=lld)
 target_precompile_headers(GateLab PRIVATE
