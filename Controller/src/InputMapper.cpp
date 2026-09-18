@@ -95,6 +95,14 @@ void InputMapper::onMousePress(const QMouseEvent *e) {
         // and close creating after press at PinItem
 
         auto *pin_item = getItem<PinItem *>(e->pos());
+        WireNode *new_node_item = [&]() -> WireNode * {
+            for (auto *item : scene_->items(e->pos())) {
+                if (auto *node = dynamic_cast<WireNode *>(item); node && node != wireCreating->current_node)
+                    return node;
+            }
+
+            return nullptr;
+        }();
 
         // start create
         if (pin_item && wireCreating->wire_item == nullptr) {
@@ -119,7 +127,7 @@ void InputMapper::onMousePress(const QMouseEvent *e) {
             wireCreating->current_node = node;
         }
         // produce nodes
-        else if (!pin_item && wireCreating->wire_item != nullptr) {
+        else if (!pin_item && !new_node_item && wireCreating->wire_item != nullptr) {
             auto *node = new WireNode(wireCreating->wire_item);
             node->setPos(e->pos()-node->boundingRect().center());
 
@@ -128,7 +136,17 @@ void InputMapper::onMousePress(const QMouseEvent *e) {
             wireCreating->last_end_point = wireCreating->current_node;
             wireCreating->current_node = node;
         }
-        // end creating
+        // end creating on node_item
+        else if (new_node_item && new_node_item->parentWire() != wireCreating->wire_item && wireCreating->wire_item != nullptr) {
+            qDebug() << "wire unite";
+
+            emit uniteWireRequest(wireCreating->wire_item, new_node_item->parentWire(), wireCreating->current_node, new_node_item);
+
+            new_node_item->parentWire()->collapseNode(wireCreating->current_node);
+
+            wireCreating->reset();
+        }
+        // end creating on pin_item
         else if (pin_item && wireCreating->wire_item != nullptr) {
 
             wireCreating->wire_item->createLine(wireCreating->current_node, pin_item);
@@ -137,7 +155,8 @@ void InputMapper::onMousePress(const QMouseEvent *e) {
             emit addPinToWireRequest(wireCreating->wire_item, pin_item);
 
             wireCreating->reset();
-        } else {
+        }
+        else {
             my_assert(true); // in tests we will check situations when it is execute
         }
     }

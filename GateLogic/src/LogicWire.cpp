@@ -3,8 +3,13 @@
 #include <LogicPin.h>
 #include <WireItem.h>
 
-LogicWire::LogicWire(WireItem *item) {
-    signal_consumer = item;
+
+LogicWire::LogicWire() {
+
+}
+
+void LogicWire::setSignalConsumer(WireItem *signal_consumer) {
+    signal_consumer_ = signal_consumer;
 }
 
 void LogicWire::handle() {
@@ -16,28 +21,47 @@ void LogicWire::handle() {
         }
     );
 
-    if (pins_.size() == 0) return;
+
 
     bool signal{};
 
-    for (auto pin__ : pins_) {
-        if (const auto pin = pin__.lock()) {
-            if (bool own = pin->ownSignal()) {
-                signal = true;
-                break;
+    if (pins_.size() != 0) {
+        for (auto pin__ : pins_) {
+            if (const auto pin = pin__.lock()) {
+                if (bool own = pin->ownSignal()) {
+                    signal = true;
+                    break;
+                }
+            }
+        }
+
+        for (auto pin__ : pins_) {
+            if (const auto pin = pin__.lock()) {
+                pin->setSignalByWire(signal);
             }
         }
     }
 
-    for (auto pin__ : pins_) {
-        if (const auto pin = pin__.lock()) {
-            pin->setSignalByWire(signal);
+    if (signal_consumer_)
+        signal_consumer_->setColorBySignal(signal);
+}
+
+std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin> > LogicWire::uniteWire(std::shared_ptr<LogicWire> &logic_wire) {
+    std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin> > new_pins;
+
+    for (auto new_pin_ : logic_wire->pins_) {
+        if (const auto new_pin = new_pin_.lock()) {
+            new_pin->setWire(shared_from_this());
+            new_pins.insert(new_pin_);
+            pins_.insert(new_pin);
         }
     }
 
-    if (signal_consumer != nullptr) {
-        signal_consumer->setColorBySignal(signal);
-    }
+    logic_wire->pins_.clear();
+
+    handle();
+
+    return new_pins;
 }
 
 void LogicWire::addPin(const std::weak_ptr<LogicPin> &pin) {

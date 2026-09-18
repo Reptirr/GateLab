@@ -21,7 +21,7 @@ bool WireItem::notifyEndPointDelete() const {
     return false;
 }
 
-WireItem::WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2) {
+WireItem::WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2, std::shared_ptr<LogicWire> logic_wire) : logic_wire_(logic_wire) {
     my_assert(end_point1->scene() == end_point2->scene());
 
     setZValue(WireZValue);
@@ -92,7 +92,7 @@ bool WireItem::removeEndPoint(WireEndPoint *end_point) {
 }
 
 void WireItem::createLine(WireEndPoint *from, WireEndPoint *to) {
-    my_assert(end_points_.contains(from) && !end_points_.contains(to));
+    // my_assert(end_points_.contains(from) && !end_points_.contains(to));
 
     end_points_.insert(to);
 
@@ -100,6 +100,36 @@ void WireItem::createLine(WireEndPoint *from, WireEndPoint *to) {
 
     from->addLine(line);
     to->addLine(line);
+}
+
+std::unordered_set<WireEndPoint *> WireItem::uniteWire(WireItem *wire_item, WireNode *line_from, WireNode *line_to) {
+    my_assert(wire_item != this);
+    my_assert(wire_item->end_points_.contains(line_from)); // other wire contains node from we create connection
+    my_assert(end_points_.contains(line_to)); // we contains node to we create connection
+
+    // gets points from arg wire, insert to our and create line between nodes from args
+
+    std::unordered_set<WireEndPoint *> new_end_points{wire_item->end_points_.begin(), wire_item->end_points_.end()};
+    for (auto *new_end_point : new_end_points) {
+        new_end_point->setParentWire(this);
+        if (!dynamic_cast<PinItem *>(new_end_point)) // we change ownership only for nodes and lines
+            new_end_point->setParentItem(this);
+
+        for (auto *line : new_end_point->lines()) {
+            line->setParentWire(this);
+            line->setParentItem(this);
+        }
+
+        end_points_.insert(new_end_point);
+    }
+
+    wire_item->end_points_.clear();
+    delete wire_item;
+
+    // create line
+    createLine(line_from, line_to);
+
+    return new_end_points;
 }
 
 QColor WireItem::color() const {

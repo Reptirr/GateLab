@@ -8,7 +8,7 @@
 
 WireLine::WireLine(WireEndPoint *from, WireEndPoint *to, WireItem *parent_wire) : QGraphicsItem(parent_wire), from_(from),
     to_(to), parent_wire_(parent_wire) {
-    qDebug() << "wireline constructor";
+    qDebug() << "wireline constructor. wire_item: " << parent_wire_;
 
     setZValue(LineZValue);
     setAcceptHoverEvents(true);
@@ -49,6 +49,10 @@ WireEndPoint * WireLine::to() const {
 
 WireItem * WireLine::wire() const {
     return parent_wire_;
+}
+
+void WireLine::setParentWire(WireItem *wire_item) {
+    parent_wire_ = wire_item;
 }
 
 void WireLine::rebuild() {

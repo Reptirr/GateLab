@@ -16,7 +16,10 @@ enum {
 
 // wire graph z values
 enum {
-    WireZValue = 0,
-    LineZValue = 1,
-    NodeZValue = 100
+    WireZValue = 5,
+    LineZValue = 6,
+    NodeZValue = 7,
+
+    ComponentZValue = 10,
+    PinZValue = 11
 };

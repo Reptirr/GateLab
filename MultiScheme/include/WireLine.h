@@ -29,6 +29,7 @@ public:
     WireEndPoint *to() const;
 
     WireItem *wire() const;
+    void setParentWire(WireItem *wire_item);
 
     void rebuild();
 

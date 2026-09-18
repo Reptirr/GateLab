@@ -1,5 +1,5 @@
 #pragma once
-#include <BiMap.h>
+
 #include <InputMapper.h>
 #include <LogicComponentsFactory.h>
 #include <LogicPin.h>
@@ -55,20 +55,22 @@ class Controller : public QObject {
                 input_mapper_, &InputMapper::onMousePress);
 
         // InputMapper -> Controller
-        connect(input_mapper_, &InputMapper::drillDownRequest, // drill-down
+        connect(input_mapper_, &InputMapper::drillDownRequest,              // drill-down
                 this, &Controller::onDrillDownRequest);
-        connect(input_mapper_, &InputMapper::drillUpRequest, // drill-up
+        connect(input_mapper_, &InputMapper::drillUpRequest,                // drill-up
                 this, &Controller::onDrillUpRequest);
-        connect(input_mapper_, &InputMapper::wireCreateRequest, // wire-create
+        connect(input_mapper_, &InputMapper::wireCreateRequest,             // wire-create
                 this, &Controller::onWireCreateRequest);
-        connect(input_mapper_, &InputMapper::addPinToWireRequest, // pin-add
+        connect(input_mapper_, &InputMapper::uniteWireRequest,              // wire-unite
+                this, &Controller::onUniteWireRequest);
+        connect(input_mapper_, &InputMapper::addPinToWireRequest,           // pin-add
                 this, &Controller::onAddPinToWireRequest);
-        connect(input_mapper_, &InputMapper::removePinFromWireRequest, //pin-remove
+        connect(input_mapper_, &InputMapper::removePinFromWireRequest,      // pin-remove
                 this, &Controller::onRemovePinFromWireRequest);
-        connect(input_mapper_, &InputMapper::componentRemoveRequest, // component-delete
+        connect(input_mapper_, &InputMapper::componentRemoveRequest,        // component-delete
                 this, &Controller::onComponentRemoveRequest);
-        connect(input_mapper_, &InputMapper::componentCreateRequest,
-                this, &Controller::onComponentCreateRequest); // component-create
+        connect(input_mapper_, &InputMapper::componentCreateRequest,  // component-create
+                this, &Controller::onComponentCreateRequest);
     }
 
 public slots:
@@ -88,7 +90,9 @@ public slots:
     void onRemovePinFromWireRequest(WireItem *wire_item, PinItem *pin_item) {
         removePinFromWire(wire_item, pin_item);
     }
-
+    void onUniteWireRequest(WireItem *wire_item_from, WireItem *wire_item_to, WireNode *line_from, WireNode *line_to) {
+        uniteWire(wire_item_from, wire_item_to, line_from, line_to);
+    }
 
     void onDrillDownRequest(QGraphicsScene *scene) const {
         main_view_->setScene(scene);
@@ -134,20 +138,23 @@ public:
         // UI: set 2 pins in WireItem constructor, other in cycle
         // no recordings
 
-        auto *wire_item = new WireItem{point_items[0], point_items[1]};
+        // temp hook for addPinToWire
+        auto logic_wire = std::make_shared<LogicWire>();
+
+        auto *wire_item = new WireItem{point_items[0], point_items[1], logic_wire};
         main_view_->scene()->addItem(wire_item);
+
+        logic_wire->setSignalConsumer(wire_item);
 
         std::vector<std::weak_ptr<LogicPin>> logic_pins{};
         std::vector<PinItem *> pin_items{};
+
         for (auto *point_item : point_items) {
             if (auto *pin_item = dynamic_cast<PinItem *>(point_item)) {
                 logic_pins.push_back(pins_[pin_item]);
                 pin_items.push_back(pin_item);
             }
         }
-
-        // temp hook for addPinToWire
-        auto logic_wire = std::make_shared<LogicWire>(wire_item);
 
         // add recording
         wires_.insert({wire_item, logic_wire});
@@ -159,6 +166,21 @@ public:
 
         // add item to scene
         main_view_->scene()->addItem(wire_item);
+    }
+    /// just remove recording about it
+    void uniteWire(WireItem *wire_item_from, WireItem *wire_item_to, WireNode *line_from, WireNode *line_to) {
+        my_assert(wires_.contains(wire_item_from));
+        my_assert(wires_.contains(wire_item_to));
+
+        if (auto logic_wire_to = wires_.at(wire_item_to).lock(),
+                logic_wire_from = wires_.at(wire_item_from).lock();
+            logic_wire_to && logic_wire_from
+            ) {
+            logic_wire_to->uniteWire(logic_wire_from);
+        }
+        wire_item_to->uniteWire(wire_item_from, line_from, line_to);
+
+        wires_.erase(wire_item_from);
     }
 
     void addPinToWire(WireItem *wire_item, PinItem* pin_item) const {
@@ -173,7 +195,6 @@ public:
             sh_wire->addPin(sh_pin);
         }
     }
-
     void removePinFromWire(WireItem *wire_item, PinItem* pin_item) {
         const auto sh_pin =  pins_.at(pin_item).lock();
         const auto sh_wire = wires_.at(wire_item).lock();
