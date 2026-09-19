@@ -66,6 +66,23 @@ target_include_directories(GateLabCore PUBLIC
 add_executable(GateLab main.cpp)
 target_link_libraries(GateLab PRIVATE GateLabCore)
 
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set_target_properties(GateLab PROPERTIES WIN32_EXECUTABLE ON)
+endif()
+
+add_custom_target(dist
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/dist"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:GateLab>" "${CMAKE_SOURCE_DIR}/dist"
+        COMMAND "${WINDEPLOYQT}" --release --no-translations
+        "${CMAKE_SOURCE_DIR}/dist/$<TARGET_FILE_NAME:GateLab>"
+        COMMENT "Packaging GateLab into dist/"
+        VERBATIM
+)
+add_dependencies(dist GateLab)
+
+
+
 target_precompile_headers(GateLab PRIVATE
         <QWidget>
         <QGraphicsScene>
