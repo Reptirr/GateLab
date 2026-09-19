@@ -1,47 +1,55 @@
 #pragma once
 #include <QGraphicsItem>
 #include <QPainter>
-#include <QLineF>
-#include <QPainterPath>
-#include <set>
-#include <unordered_map>
 
 
+class WireLine;
+class WireNode;
+class WireEndPoint;
 class PinItem;
 class LogicWire;
 
-class WireItem : public QGraphicsItem {
-protected:
-    std::set<PinItem *> pins_;
-    std::unordered_map<PinItem *, QLineF> lines_;
-    QPointF lines_center_{};
 
-private:
+// always need 2 end points
+class WireItem : public QGraphicsItem {
+    // with logic side
     QColor color_ = QColorConstants::Black;
 
     void setColorBySignal(bool signal);
 
-    // пересчитывает центр (среднее точек всех пинов) и перестраивает
-    // линии центр -> каждый пин
-    void rebuildLines();
-
+    std::shared_ptr<LogicWire> logic_wire_;
     friend LogicWire;
 
+    // graph
+    std::unordered_set<WireEndPoint *> end_points_;
+
+    /// @return is wire deleted
+    bool notifyEndPointDelete() const;
+
+    friend WireNode;
+
 public:
-    WireItem() = default;
+    WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2, std::shared_ptr<LogicWire> logic_wire);
 
-    QPainterPath shape() const override;
-    QRectF boundingRect() const override;
+    void divideLine(const WireLine *on_line, QPointF pos); // create node on line
 
+    /// @return is collapsed
+    bool collapseNode(WireNode *node); // remove node and combine 2 lines to 1
+    /// @return is wire deleted
+    bool removeEndPoint(WireEndPoint *end_point);
+
+    void createLine(WireEndPoint *from, WireEndPoint *to); // create line from our node to other end_point
+
+    /// delete wire from arg
+    /// @return new points from wire to this
+    std::unordered_set<WireEndPoint *> uniteWire(WireItem *wire_item, WireNode *line_from, WireNode *line_to);
+
+    QColor color() const;
     bool empty() const;
 
-    void addPin(PinItem *pin);
-    void removePin(PinItem *pin);
-
-    std::set<PinItem*> pins() {
-        return pins_;
-    }
-
+    QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     int type() const override;
+
+    ~WireItem() override;
 };

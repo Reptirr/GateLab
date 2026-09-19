@@ -50,8 +50,13 @@ signals:
     void drillUpRequest(QGraphicsScene *);
 
     // create requests
-    void wireCreateRequest(PinItem *, PinItem *);
+    void wireCreateRequest(WireEndPoint *, WireEndPoint *);
     void componentCreateRequest(ComponentItem *);
+
+    // modify requests
+    void addPinToWireRequest(WireItem *, PinItem *);
+    void removePinFromWireRequest(WireItem *, PinItem *);
+    void uniteWireRequest(WireItem *wire_item_from, WireItem *wire_item_to, WireNode *line_from, WireNode *line_to);
 
     // delete request
     void componentRemoveRequest(ComponentItem *);

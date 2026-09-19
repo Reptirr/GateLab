@@ -1,34 +1,62 @@
 #pragma once
+#include <my_assert.h>
 #include <qpainter.h>
 #include <UIConstants.h>
 #include <WireItem.h>
 #include <QGraphicsScene>
+#include <WireEndpoint.h>
+#include <WireLine.h>
 
-class PinItem : public QGraphicsItem {
+class PinItem : public WireEndPoint {
 
     qreal width_ = 20;
     qreal height_ = 20;
 
-    WireItem *wire_{};
+    WireLine *conn_{};
 
 public:
-    explicit PinItem(QGraphicsItem* parent) {
+    explicit PinItem(QGraphicsItem* parent) : WireEndPoint(parent) {
         setParentItem(parent);
+    }
+
+
+    void addLine(WireLine *line) override {
+        if (wire_item_)
+            my_assert(wire_item_ == line->wire());
+
+        wire_item_ = line->wire();
+        conn_ = line;
+    }
+    void removeLine(WireLine *line) override {
+        conn_ = nullptr;
+        wire_item_ = nullptr; // there is no conn anymore
+    }
+
+    std::unordered_set<WireLine *> lines() override {
+        // imitation
+        if (conn_) return {conn_};
+        else return {};
+    }
+    WireLine *conn() const {
+        return conn_;
+    }
+
+    void clearLines() override {
+        if (conn_) {
+            conn_->removeWireEndpoint();
+            conn_ = nullptr;
+        }
+    }
+    void disconnect() override {
+        conn_ = nullptr;
+    }
+
+    void rebuildLine() const {
+        if (conn_) conn_->rebuild();
     }
 
     QRectF boundingRect() const override {
         return QRectF{0, 0, width_, height_};
-    }
-
-    void setWire(WireItem *wire) {
-        wire_ = wire;
-    }
-    void removeWire() {
-        wire_ = nullptr;
-    }
-    // returns nullptr if there is no wire
-    WireItem *wire() const {
-        return wire_;
     }
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
@@ -45,7 +73,8 @@ public:
     }
 
     ~PinItem() override {
-        // remove from wire
-        if (wire_) wire_->removePin(this);
+        qDebug() << "pin_item delete";
+
+        if (conn_) conn_->removeWireEndpoint();
     }
 };

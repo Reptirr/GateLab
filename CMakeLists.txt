@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3)
+cmake_minimum_required(VERSION 4.2.)
 project(GateLab)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -33,10 +33,20 @@ add_library(GateLabCore STATIC
         MultiScheme/include/instant/SourceItem.h
         MultiScheme/src/WireItem.cpp
         Controller/include/LogicComponentsFactory.h
-        GateLogic/include/Utils.h
+        GateLogic/include/LogicUtils.h
         Controller/include/Mode.h
         IDEUI/include/GLToolBar.h
         IDEUI/include/MainWindow.h
+        MultiScheme/include/WireLine.h
+        MultiScheme/include/WireNode.h
+        MultiScheme/include/WireEndpoint.h
+        MultiScheme/src/WireNode.cpp
+        MultiScheme/src/WireLine.cpp
+        MultiScheme/include/Utils.h
+        my_assert.h
+        MultiScheme/include/MoveHelper.h
+        GateLogic/include/instant/LogicNTransistor.h
+        MultiScheme/include/instant/NTransistorItem.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
@@ -50,16 +60,31 @@ target_include_directories(GateLabCore PUBLIC
         GateLogic/include
         Controller/include
         IDEUI/include
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_executable(GateLab main.cpp)
 target_link_libraries(GateLab PRIVATE GateLabCore)
 
-target_link_options(GateLabCore PRIVATE -fuse-ld=lld)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set_target_properties(GateLab PROPERTIES WIN32_EXECUTABLE ON)
+endif()
+
+add_custom_target(dist
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/dist"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:GateLab>" "${CMAKE_SOURCE_DIR}/dist"
+        COMMAND "${WINDEPLOYQT}" --release --no-translations
+        "${CMAKE_SOURCE_DIR}/dist/$<TARGET_FILE_NAME:GateLab>"
+        COMMENT "Packaging GateLab into dist/"
+        VERBATIM
+)
+add_dependencies(dist GateLab)
+
+
+
 target_precompile_headers(GateLab PRIVATE
         <QWidget>
-        <QObject>
-        <QString>
         <QGraphicsScene>
         <QGraphicsItem>
 )

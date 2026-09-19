@@ -2,6 +2,7 @@
 #include <qgraphicsitem.h>
 
 
+// types for qgraphics_cast
 enum {
     // basic
     PinType = QGraphicsItem::UserType + 10,
@@ -9,5 +10,17 @@ enum {
 
     // derived
     TransistorType = QGraphicsItem::UserType + 30,
+    NTransistorType = QGraphicsItem::UserType + 35,
     SourceType = QGraphicsItem::UserType + 40
+};
+
+
+// wire graph z values
+enum {
+    WireZValue = 5,
+    LineZValue = 6,
+    NodeZValue = 7,
+
+    ComponentZValue = 10,
+    PinZValue = 11
 };
