@@ -1,3 +1,4 @@
+#include <LogicWire.h>
 #include <my_assert.h>
 #include <WireItem.h>
 
@@ -167,4 +168,6 @@ WireItem::~WireItem() {
             delete end_point;
         }
     }
+
+    if (logic_wire_) logic_wire_->setSignalConsumer(nullptr);
 }

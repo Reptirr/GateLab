@@ -10,6 +10,7 @@ enum {
 
     // derived
     TransistorType = QGraphicsItem::UserType + 30,
+    NTransistorType = QGraphicsItem::UserType + 35,
     SourceType = QGraphicsItem::UserType + 40
 };
 

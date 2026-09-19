@@ -13,7 +13,7 @@ class LogicPin;
 class LogicWire : public std::enable_shared_from_this<LogicWire>{
     std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin>> pins_;
 
-    WireItem *signal_consumer_;
+    WireItem *signal_consumer_{};
 
 public:
     LogicWire();

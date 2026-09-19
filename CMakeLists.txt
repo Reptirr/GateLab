@@ -45,6 +45,8 @@ add_library(GateLabCore STATIC
         MultiScheme/include/Utils.h
         my_assert.h
         MultiScheme/include/MoveHelper.h
+        GateLogic/include/instant/LogicNTransistor.h
+        MultiScheme/include/instant/NTransistorItem.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
@@ -64,12 +66,6 @@ target_include_directories(GateLabCore PUBLIC
 add_executable(GateLab main.cpp)
 target_link_libraries(GateLab PRIVATE GateLabCore)
 
-if(MINGW)
-    add_compile_options(-g -gdwarf-2 -fno-omit-frame-pointer)
-    add_link_options(-static-libgcc -static-libstdc++)
-endif()
-
-target_link_options(GateLabCore PRIVATE -fuse-ld=lld)
 target_precompile_headers(GateLab PRIVATE
         <QWidget>
         <QGraphicsScene>

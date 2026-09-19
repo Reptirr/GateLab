@@ -163,9 +163,6 @@ public:
         for (auto *pin_item : pin_items) {
             addPinToWire(wire_item, pin_item);
         }
-
-        // add item to scene
-        main_view_->scene()->addItem(wire_item);
     }
     /// just remove recording about it
     void uniteWire(WireItem *wire_item_from, WireItem *wire_item_to, WireNode *line_from, WireNode *line_to) {
@@ -224,7 +221,6 @@ public:
             auto *pin_item = component_item->pins()[i];
             auto logic_pin = logic_component->pins()[i];
 
-            main_view_->scene()->addItem(pin_item);
             pins_[pin_item] = logic_pin;
         }
 
@@ -239,6 +235,9 @@ public:
         // UI: just delete component_item. after that it will call destructors of pins and them will remove pin from their wires
         // also remove recordings of component and pins
 
+        // reset hook on logic_component
+        black_box_components_.extract(component_item).mapped().reset();
+
         // remove item_pins
         for (auto *pin : component_item->pins()) {
             if (pin->parentWire())
@@ -247,8 +246,6 @@ public:
             pins_.erase(pin);
         }
 
-        // reset hook on logic_component
-        black_box_components_.extract(component_item).mapped().reset();
 
         delete component_item;
     }

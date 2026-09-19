@@ -11,14 +11,12 @@ Q_DECLARE_METATYPE(EditMode)
 struct WireCreating  {
     // for logic create
     WireItem *wire_item;
-    WireEndPoint *last_end_point;
 
     // for moving while create
     WireNode *current_node;
 
     void reset() {
         wire_item = nullptr;
-        last_end_point = nullptr;
         current_node = nullptr;
     }
 
