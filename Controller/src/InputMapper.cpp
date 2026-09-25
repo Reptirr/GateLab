@@ -67,8 +67,10 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
         switch (keyEvent->key()) {
             case Qt::Key_Q:
             case Qt::Key_Escape:
+                if (wireCreating->wire_item == nullptr) return; // not in creating
+
                 // remove current node (remove from wire_item itself)
-                wireCreating->wire_item->removeEndPoint(wireCreating->current_node);
+                emit divideWireInNode(wireCreating->wire_item, wireCreating->current_node);
 
                 wireCreating->reset();
                 break;
@@ -80,15 +82,10 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
                 if (node == nullptr) return;
 
                 auto wire_item = node->parentWire();
-                if (wire_item == nullptr) {
-                    delete node;
-                    break;
-                }
+                my_assert(wire_item != nullptr);
 
-                // collapse or just remove
-                if (!wire_item->collapseNode(node)) {
-                    wire_item->removeEndPoint(node);
-                }
+                emit divideWireInNode(wire_item, node);
+
 
                 break;
             }
@@ -96,6 +93,15 @@ void InputMapper::onKeyPress(const QKeyEvent *keyEvent, const QPointF mousePos) 
             default: break;
         }
     }
+}
+
+void InputMapper::onMouseDoubleClick(const QMouseEvent *event) {
+    auto *component = getItem<ComponentItem*>(event->pos());
+    if (component == nullptr || component->interior() == nullptr) return;
+
+    // drill_stack_.emplace(scene_);
+
+    emit drillDownRequest(component->interior());
 }
 
 void InputMapper::onMousePress(const QMouseEvent *e) {
@@ -122,60 +128,68 @@ void InputMapper::onMousePress(const QMouseEvent *e) {
             }
 
             // create wire_item & node at mousePos
-
             auto *node = new WireNode();
-            node->setPos(e->pos()-node->boundingRect().center());
+            node->setPos(e->pos() -node->boundingRect().center());
             scene_->addItem(node);
 
             emit wireCreateRequest(pin_item, node);
 
             wireCreating->wire_item = pin_item->parentWire();
-
-            node->setParentWire(wireCreating->wire_item);
-
             wireCreating->current_node = node;
         }
         // start with node
         else if (new_node_item && wireCreating->wire_item == nullptr) {
             wireCreating->wire_item = new_node_item->parentWire();
-
-            auto *node = new WireNode(wireCreating->wire_item);
-            node->setPos(e->pos()-node->boundingRect().center());
-
-            wireCreating->current_node = node;
-
-            wireCreating->wire_item->createLine(new_node_item, node);
+            wireCreating->new_node_creating = true;
+            wireCreating->from_node = new_node_item;
         }
         // produce nodes
         else if (!pin_item && !new_node_item && wireCreating->wire_item != nullptr) {
-            auto *node = new WireNode(wireCreating->wire_item);
-            node->setPos(e->pos()-node->boundingRect().center());
-
-            wireCreating->wire_item->createLine(wireCreating->current_node, node);
-
-            wireCreating->current_node = node;
+            emit createNodeRequest(
+                wireCreating->wire_item,
+                wireCreating->current_node,
+                e->pos()-node_rect.center(),
+                wireCreating->current_node
+            );
         }
         // end creating on node
         else if (new_node_item && new_node_item->parentWire() != wireCreating->wire_item && wireCreating->wire_item != nullptr) {
             qDebug() << "wire unite";
 
-            emit uniteWireRequest(wireCreating->wire_item, new_node_item->parentWire(), wireCreating->current_node, new_node_item);
-
-            new_node_item->parentWire()->collapseNode(wireCreating->current_node);
+            emit uniteWireRequest(
+                wireCreating->wire_item,
+                new_node_item->parentWire(),
+                wireCreating->current_node,
+                new_node_item
+            );
+            emit collapseNode(
+                wireCreating->wire_item,
+                wireCreating->current_node
+            );
 
             wireCreating->reset();
         }
         // end creating on pin
         else if (pin_item && wireCreating->wire_item != nullptr) {
 
-            wireCreating->wire_item->createLine(wireCreating->current_node, pin_item);
-            wireCreating->wire_item->collapseNode(wireCreating->current_node);
-
-            emit addPinToWireRequest(wireCreating->wire_item, pin_item);
+            emit addPinToWireRequest(wireCreating->wire_item, wireCreating->current_node, pin_item);
+            emit collapseNode(wireCreating->wire_item, wireCreating->current_node);
 
             wireCreating->reset();
         }
 
+    }
+}
+
+void InputMapper::onMouseRelease(const QMouseEvent *e) {
+    if (const auto wireCreating = std::get_if<WireCreating>(&mode_)) {
+        if (wireCreating->new_node_creating) {
+            emit createNodeRequest(wireCreating->wire_item, wireCreating->from_node, e->pos()-wireCreating->from_node->boundingRect().center(), wireCreating->current_node);
+
+            // change state from pre-create to normal produce nodes
+            wireCreating->from_node = nullptr;
+            wireCreating->new_node_creating = false;
+        }
     }
 }
 
@@ -190,15 +204,6 @@ void InputMapper::onMouseMove(const QMouseEvent *e) const {
 
 void InputMapper::onModeChange(const EditMode mode) {
     mode_.emplaceByEnum(mode);
-}
-
-void InputMapper::onMouseDoubleClick(const QMouseEvent *event) {
-    auto *component = getItem<ComponentItem*>(event->pos());
-    if (component == nullptr || component->interior() == nullptr) return;
-
-    // drill_stack_.emplace(scene_);
-
-    emit drillDownRequest(component->interior());
 }
 
 void InputMapper::setScene(QGraphicsScene *scene) {

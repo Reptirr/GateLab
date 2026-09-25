@@ -23,7 +23,7 @@ public:
 
     void handle() override {
         right_pin_->setSignalByOwner(
-            left_pin_->getSignal() && !top_pin_->getSignal()
+            left_pin_->signal() && !top_pin_->signal()
         );
     }
 

@@ -22,12 +22,14 @@ signals:
     void mouseDoubleClick(QMouseEvent *);
     void mousePress(QMouseEvent *);
     void mouseMove(QMouseEvent *);
+    void mouseRelease(QMouseEvent *);
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override; // for drill-down
     void keyPressEvent(QKeyEvent *event) override; // for creating & drill-down
     void mousePressEvent(QMouseEvent *event) override; // for interactive with items
     void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
 
     void resizeEvent(QResizeEvent *event) override; // for scene rect resize
 

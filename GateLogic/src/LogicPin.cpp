@@ -2,10 +2,8 @@
 #include <LogicPin.h>
 #include <LogicWire.h>
 
-void LogicPin::setWire(const std::shared_ptr<LogicWire>& external) {
-    conn_ = external;
-
-    conn_->handle();
+void LogicPin::setWire(std::shared_ptr<LogicWire> external) {
+    conn_ = std::move(external);
 }
 
 void LogicPin::removeWire() {
@@ -18,11 +16,19 @@ void LogicPin::removeWire() {
     }
 }
 
+std::weak_ptr<LogicWire> LogicPin::wire() {
+    return conn_;
+}
+
+std::weak_ptr<LogicComponent> LogicPin::owner() {
+    return owner_;
+}
+
 LogicPin::LogicPin(const std::weak_ptr<LogicComponent> &owner) {
     owner_ = owner;
 }
 
-bool LogicPin::getSignal() const {
+bool LogicPin::signal() const {
     return signal_;
 }
 

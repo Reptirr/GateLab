@@ -30,7 +30,7 @@ TEST(WireTest, WireTransmitsSignal) {
 
     pin1->setSignalByOwner(true);
 
-    ASSERT_TRUE(pin2->getSignal());
+    ASSERT_TRUE(pin2->signal());
 
 }
 

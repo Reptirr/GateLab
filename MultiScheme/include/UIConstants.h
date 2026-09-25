@@ -1,5 +1,10 @@
 #pragma once
+
 #include <qgraphicsitem.h>
+
+// sizes
+constexpr QRectF pin_rect = {0, 0, 20, 20};
+constexpr QRectF node_rect = {0, 0, 15, 15};
 
 
 // types for qgraphics_cast

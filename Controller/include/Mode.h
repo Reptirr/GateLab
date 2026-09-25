@@ -10,14 +10,21 @@ Q_DECLARE_METATYPE(EditMode)
 
 struct WireCreating  {
     // for logic create
-    WireItem *wire_item;
+    WireItem *wire_item{};
 
     // for moving while create
-    WireNode *current_node;
+    WireNode *current_node{};
+
+    // for new-node-creating
+    WireNode *from_node{};
+    bool new_node_creating{};
 
     void reset() {
         wire_item = nullptr;
         current_node = nullptr;
+
+        from_node = nullptr;
+        new_node_creating = false;
     }
 
     ~WireCreating() {

@@ -51,6 +51,10 @@ void MainView::mouseMoveEvent(QMouseEvent *event) {
     emit mouseMove(event->clone());
 }
 
+void MainView::mouseReleaseEvent(QMouseEvent *event) {
+    emit mouseRelease(event);
+}
+
 void MainView::resizeEvent(QResizeEvent *event) {
     QGraphicsView::resizeEvent(event);
 

@@ -47,6 +47,8 @@ add_library(GateLabCore STATIC
         MultiScheme/include/MoveHelper.h
         GateLogic/include/instant/LogicNTransistor.h
         MultiScheme/include/instant/NTransistorItem.h
+        Controller/include/LogicController.h
+        Controller/include/UIController.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

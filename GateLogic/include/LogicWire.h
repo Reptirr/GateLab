@@ -25,4 +25,6 @@ public:
 
     void addPin(const std::weak_ptr<LogicPin> &pin);
     void removePin(const std::weak_ptr<LogicPin> &pin);
+
+    std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin>> pins();
 };

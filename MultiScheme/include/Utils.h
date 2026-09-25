@@ -1,6 +1,9 @@
 #pragma once
+#include <PinItem.h>
 #include <qpoint.h>
 #include <QSizeF>
+#include <WireEndpoint.h>
+#include <WireNode.h>
 
 inline QPointF centerPos(const QPointF top_left, const QSizeF size) {
     return {
@@ -9,8 +12,13 @@ inline QPointF centerPos(const QPointF top_left, const QSizeF size) {
     };
 }
 
+inline PinItem * instanceOfPinItem(WireEndPoint *end_point) {
+    return dynamic_cast<PinItem *>(end_point);
+}
 
-
+inline WireNode * instanceOfWireNode(WireEndPoint *end_point) {
+    return dynamic_cast<WireNode *>(end_point);
+}
 
 inline QPointF closestPointOnLine(const QLineF &line, const QPointF &point) {
     const QPointF a = line.p1();

@@ -14,7 +14,7 @@ class MainWindow : public QMainWindow {
     void initConnects() {
         // GLToolBar -> InputMapper
         connect(toolbar_, &GLToolBar::modeChange,
-                controller_.inputMapper(), &InputMapper::onModeChange);
+                controller_.input_mapper(), &InputMapper::onModeChange);
     }
 
 public:
@@ -23,7 +23,7 @@ public:
         addToolBar(toolbar_);
 
         // central
-        setCentralWidget(controller_.mainView());
+        setCentralWidget(controller_.view());
 
         initConnects();
     }

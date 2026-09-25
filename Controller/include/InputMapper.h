@@ -39,6 +39,7 @@ public slots:
     void onKeyPress(const QKeyEvent *, QPointF );
     void onMouseDoubleClick(const QMouseEvent *);
     void onMousePress(const QMouseEvent *);
+    void onMouseRelease(const QMouseEvent *);
     void onMouseMove(const QMouseEvent *) const;
 
     void onModeChange(EditMode mode);
@@ -54,9 +55,12 @@ signals:
     void componentCreateRequest(ComponentItem *);
 
     // modify requests
-    void addPinToWireRequest(WireItem *, PinItem *);
+    void addPinToWireRequest(WireItem *, WireEndPoint *, PinItem *);
     void removePinFromWireRequest(WireItem *, PinItem *);
+    void createNodeRequest(WireItem *, WireEndPoint *, QPointF pos, WireNode *&);
     void uniteWireRequest(WireItem *wire_item_from, WireItem *wire_item_to, WireNode *line_from, WireNode *line_to);
+    void collapseNode(WireItem *wire_item, WireNode *node);
+    void divideWireInNode(WireItem *wire_item, WireNode *node);
 
     // delete request
     void componentRemoveRequest(ComponentItem *);
