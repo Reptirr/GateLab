@@ -8,6 +8,7 @@
 #include <my_assert.h>
 #include <WireNode.h>
 #include <instant/NTransistorItem.h>
+#include <instant/SourceItem.h>
 #include <instant/TransistorItem.h>
 
 static QPointF createCenterPos(const QPointF top_left, const QSizeF &rect) {

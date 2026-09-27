@@ -10,7 +10,7 @@ if (NOT CMAKE_PREFIX_PATH)
     message(WARNING "no cmake_prefix_path. set it for qt 6.5 path")
 endif()
 
-find_package(Qt6 6.5 COMPONENTS
+find_package(Qt6 6.4.2 COMPONENTS
         Core
         Gui
         Widgets

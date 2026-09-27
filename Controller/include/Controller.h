@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QMouseEvent>
 #include <InputMapper.h>
 #include <LogicComponentsFactory.h>
 #include <LogicController.h>
@@ -12,9 +13,6 @@
 #include <WireItem.h>
 #include <QObject>
 #include <UIController.h>
-#include <instant/LogicSource.h>
-#include <instant/LogicTransistor.h>
-#include <instant/SourceItem.h>
 
 class QMainWindow;
 class LogicTransistor;

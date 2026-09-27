@@ -5,6 +5,7 @@
 #include <QSizeF>
 #include <qstylehints.h>
 #include <WireEndpoint.h>
+#include <qpalette.h>
 #include <WireNode.h>
 
 inline QPointF centerPos(const QPointF top_left, const QSizeF size) {
