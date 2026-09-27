@@ -7,11 +7,13 @@ void LogicPin::setWire(std::shared_ptr<LogicWire> external) {
 }
 
 void LogicPin::removeWire() {
+    if (conn_ == nullptr) return; // already no conn
+
     conn_->removePin(weak_from_this());
     conn_.reset();
     signal_ = false; // there is no source of signal anymore
 
-    if (const auto ptr = owner_.lock()) {
+    if (auto ptr = owner_.lock()) {
         ptr->handle();
     }
 }

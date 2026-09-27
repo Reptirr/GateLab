@@ -56,6 +56,12 @@ public:
 
         my_assert(components_.contains(component));
 
+        for (auto pin__ : component->pins()) {
+            if (auto pin = pin__.lock()) {
+                pin->removeWire();
+            }
+        }
+
         components_.extract(component).value().reset(); // after that
     }
 

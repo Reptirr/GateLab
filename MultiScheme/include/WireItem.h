@@ -1,6 +1,7 @@
 #pragma once
 #include <QGraphicsItem>
 #include <QPainter>
+#include <unordered_set>
 
 
 class WireItem;
@@ -12,6 +13,7 @@ class LogicWire;
 
 struct WireDivideResult {
     std::unordered_set<WireItem *> new_wires{};
+    bool is_source_wire_deleted{};
     std::unordered_set<PinItem *> disconnected_pins{};
 };
 

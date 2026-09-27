@@ -1,6 +1,8 @@
 #include <Controller.h>
 #include <MainWindow.h>
 #include <QApplication>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 
 
 int main(int argc, char *argv[]) {

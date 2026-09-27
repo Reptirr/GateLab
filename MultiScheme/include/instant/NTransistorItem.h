@@ -3,34 +3,28 @@
 
 class NTransistorItem : public ComponentItem {
 
-    qreal width_ = 150;
-    qreal height_ = 100;
-
 public:
-    explicit NTransistorItem(const QPointF pos) {
+    explicit NTransistorItem(const QPointF pos) : ComponentItem(150, 100) {
         setPos(pos);
 
         auto *top = new PinItem{this};
         auto *left = new PinItem{this};
         auto *right = new PinItem{this};
 
-        const auto x_center = (width_ - top->boundingRect().width()) / 2;
-        const auto y_center = (height_ - top->boundingRect().height()) / 2;
+        left->setPos({
+            -left->rect().width() / 2,
+            rect().height() / 2 - left->rect().height() / 2
+        });
 
-        left->setPos(
-            -(left->boundingRect().width() / 2),
-            y_center
-        );
+        top->setPos({
+            rect().width() / 2 - top->rect().width() / 2,
+            -top->rect().height() / 2
+        });
 
-        top->setPos(
-            x_center,
-            -(top->boundingRect().height() / 2)
-        );
-
-        right->setPos(
-            width_ - (right->boundingRect().width() / 2),
-            y_center
-        );
+        right->setPos({
+            rect().width() - right->rect().width() / 2,
+            rect().height() / 2 - right->rect().height() / 2
+        });
 
         pins_.push_back(left);
         pins_.push_back(top);
@@ -41,15 +35,11 @@ public:
         return QSizeF{width_, height_};
     }
 
-    QRectF boundingRect() const override {
-        return QRectF{0, 0, width_, height_};
-    }
-
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
-        painter->drawRect(0, 0, width_, height_);
+        painter->setPen(pen_);
 
-        const QRectF rect(0, 0, width_, height_);
-        painter->drawText(rect, Qt::AlignCenter, "NTransistor");
+        painter->drawRect(rect());
+        painter->drawText(rect(), Qt::AlignCenter, "NTransistor");
     }
 
     int type() const override {

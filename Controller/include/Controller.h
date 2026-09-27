@@ -96,6 +96,10 @@ public slots:
         }
     }
     void onComponentRemoveRequest(ComponentItem *component_item) {
+        // delete now because ui_controller_::removeComponent delete component_item
+        for (auto *pin_item : component_item->pins())
+            pins_.erase(pin_item);
+
         logic_controller_.removeComponent(black_box_components_.at(component_item));
         auto deleted_wires = ui_controller_.removeComponent(component_item);
 
@@ -109,14 +113,13 @@ public slots:
             // imitate legal deleting
             if (auto logic_wire = logic_wire__.lock()) {
                 for (auto pin__ : logic_wire->pins()) {
+                    logic_wire__.lock()->setSignalConsumer(nullptr); // because there is no ui wire. !костыль!
                     logic_controller_.disconnectPin(logic_wire__, pin__);
                 }
             }
         }
 
         black_box_components_.erase(component_item);
-        for (auto *pin_item : component_item->pins())
-            pins_.erase(pin_item);
     }
 
 
@@ -229,6 +232,14 @@ public slots:
 
             logic_pin__.lock()->wire().lock()->removePin(logic_pin__);
             logic_pin__.lock()->removeWire();
+        }
+
+        // delete source wire if it is
+        if (res.is_source_wire_deleted) {
+            delete wire_item;
+            // logic wire already reconnected/disconnected
+
+            wires_.erase(wire_item);
         }
     }
     void onUniteWire(WireItem *first, WireItem *second, WireNode *from, WireNode *to) {

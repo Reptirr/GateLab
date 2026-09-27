@@ -175,8 +175,11 @@ WireDivideResult WireItem::divideWireIn(WireNode *node) {
             end_points_.erase(point);
             our_points.erase(point);
 
-            delete node;
+            delete point;
         }
+
+        // set flag of are we deleted
+        res.is_source_wire_deleted = true;
     }
 
     // we have sets of new wires

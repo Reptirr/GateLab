@@ -65,7 +65,9 @@ void MainView::resizeEvent(QResizeEvent *event) {
 MainView::MainView(QGraphicsScene *main_scene) {
     _main_scene = main_scene;
 
-    setRenderHints({QPainter::Antialiasing, QPainter::TextAntialiasing});
+    setRenderHints({QPainter::TextAntialiasing});
+    setViewportUpdateMode(BoundingRectViewportUpdate);
+
     viewport()->setAttribute(Qt::WA_AcceptTouchEvents, false);
 
     setScene(_main_scene);
