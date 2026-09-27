@@ -6,7 +6,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 COMPONENTS
+if (NOT CMAKE_PREFIX_PATH)
+    message(WARNING "no cmake_prefix_path. set it for qt 6.5 path")
+endif()
+
+find_package(Qt6 6.5 COMPONENTS
         Core
         Gui
         Widgets

@@ -4,6 +4,7 @@
 #include <qcoreapplication.h>
 #include <QGraphicsSceneMouseEvent>
 #include <qguiapplication.h>
+#include <Utils.h>
 #include <QtGui/qstylehints.h>
 
 #include "PinItem.h"
@@ -25,11 +26,10 @@ protected:
     ComponentItem(const qreal width, const qreal height) : width_(width), height_(height) {
         pen_.setWidth(1);
 
-        const auto scheme = qGuiApp->styleHints()->colorScheme();
+        const bool is_dark = isDarkTheme();
 
         pen_.setColor(
-            scheme == Qt::ColorScheme::Dark ? QColorConstants::White
-                                              : QColorConstants::Black
+            is_dark ? QColorConstants::White : QColorConstants::Black
         );
     }
 
