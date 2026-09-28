@@ -1,7 +1,9 @@
 #pragma once
 
+#include <QMouseEvent>
 #include <InputMapper.h>
 #include <LogicComponentsFactory.h>
+#include <LogicController.h>
 #include <LogicPin.h>
 #include <LogicWire.h>
 #include <MainView.h>
@@ -10,10 +12,9 @@
 #include <unordered_map>
 #include <WireItem.h>
 #include <QObject>
-#include <instant/LogicSource.h>
-#include <instant/LogicTransistor.h>
-#include <instant/SourceItem.h>
+#include <UIController.h>
 
+class QMainWindow;
 class LogicTransistor;
 class LogicWire;
 class WireItem;
@@ -29,6 +30,11 @@ class LogicPin;
  *
  * Wire does not delete anything
  *
+ * on remove firstly delete logic, after ui
+ * on create firstly create ui after logic
+ *
+ * if on ui wire is no pins then logic wire deletes. if get request to connect pin to wire we re-create logic wire
+ *
  */
 
 class Controller : public QObject {
@@ -39,9 +45,10 @@ class Controller : public QObject {
 
     std::unordered_map<PinItem*, std::weak_ptr<LogicPin>> pins_;
     std::unordered_map<WireItem*, std::weak_ptr<LogicWire>> wires_;
-    std::unordered_map<ComponentItem*, std::shared_ptr<LogicComponent>> black_box_components_; // for component removing
+    std::unordered_map<ComponentItem*, std::weak_ptr<LogicComponent>> black_box_components_; // for component removing
 
-    std::set<ComponentItem*> drillable_components_;
+    UIController ui_controller_;
+    LogicController logic_controller_{};
 
     void initConnects() {
         // MainView -> InputMapper
@@ -53,46 +60,215 @@ class Controller : public QObject {
                 input_mapper_, &InputMapper::onMouseMove);
         connect(main_view_, &MainView::mousePress,
                 input_mapper_, &InputMapper::onMousePress);
+        connect(main_view_, &MainView::mouseRelease,
+                input_mapper_, &InputMapper::onMouseRelease);
+
+#define CONNECT_MAPPER_CONTROLLER(signal, slot) \
+    connect(input_mapper_, signal, \
+            this, slot)
 
         // InputMapper -> Controller
-        connect(input_mapper_, &InputMapper::drillDownRequest,              // drill-down
-                this, &Controller::onDrillDownRequest);
-        connect(input_mapper_, &InputMapper::drillUpRequest,                // drill-up
-                this, &Controller::onDrillUpRequest);
-        connect(input_mapper_, &InputMapper::wireCreateRequest,             // wire-create
-                this, &Controller::onWireCreateRequest);
-        connect(input_mapper_, &InputMapper::uniteWireRequest,              // wire-unite
-                this, &Controller::onUniteWireRequest);
-        connect(input_mapper_, &InputMapper::addPinToWireRequest,           // pin-add
-                this, &Controller::onAddPinToWireRequest);
-        connect(input_mapper_, &InputMapper::removePinFromWireRequest,      // pin-remove
-                this, &Controller::onRemovePinFromWireRequest);
-        connect(input_mapper_, &InputMapper::componentRemoveRequest,        // component-delete
-                this, &Controller::onComponentRemoveRequest);
-        connect(input_mapper_, &InputMapper::componentCreateRequest,  // component-create
-                this, &Controller::onComponentCreateRequest);
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::drillDownRequest,          &Controller::onDrillDownRequest);          // drill-down
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::drillUpRequest,            &Controller::onDrillUpRequest);            // drill-up
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::addPinToWireRequest,       &Controller::onAddPinToWireRequest);       // pin-add
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::removePinFromWireRequest,  &Controller::onRemovePinFromWireRequest);  // pin-remove
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::componentRemoveRequest,    &Controller::onComponentRemoveRequest);    // component-delete
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::componentCreateRequest,    &Controller::onComponentCreateRequest);    // component-create
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::wireCreateRequest,         &Controller::onWireCreateRequest);         // wire-create
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::createNodeRequest,         &Controller::onCreateLineToPos);           // wire-node-at-pos-create
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::uniteWireRequest,          &Controller::onUniteWire);                 // wire-unite
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::collapseNode,              &Controller::onCollapseNode);              // wire-node-collapse
+        CONNECT_MAPPER_CONTROLLER(&InputMapper::divideWireInNode,          &Controller::onDivideWireInNode);          // wire-divide
+
+#undef CONNECT_MAPPER_CONTROLLER
     }
 
 public slots:
     void onComponentCreateRequest(ComponentItem *component_item) {
-        addComponent(component_item);
+        ui_controller_.createComponent(component_item);
+        auto logic_component = logic_controller_.createComponent(logicTypeByItem(component_item));
+
+        black_box_components_.insert({component_item, logic_component});
+        for (int i = 0; i < component_item->pins().size(); i++) {
+            pins_.insert({component_item->pins()[i], logic_component.lock()->pins()[i]});
+        }
     }
-    void onComponentRemoveRequest(ComponentItem *component) {
-        removeComponent(component);
+    void onComponentRemoveRequest(ComponentItem *component_item) {
+        // delete now because ui_controller_::removeComponent delete component_item
+        for (auto *pin_item : component_item->pins())
+            pins_.erase(pin_item);
+
+        logic_controller_.removeComponent(black_box_components_.at(component_item));
+        auto deleted_wires = ui_controller_.removeComponent(component_item);
+
+        /*
+         * ui_wire deleting if it has 1 and less points. logic wire auto-deleting if it has 0 connected pins.
+         * we sync it. if ui is deleted, logic also
+         */
+        for (auto *wire_item : deleted_wires) {
+            auto logic_wire__ = wires_.extract(wire_item).mapped();
+
+            // imitate legal deleting
+            if (auto logic_wire = logic_wire__.lock()) {
+                for (auto pin__ : logic_wire->pins()) {
+                    logic_wire__.lock()->setSignalConsumer(nullptr); // because there is no ui wire. !костыль!
+                    logic_controller_.disconnectPin(logic_wire__, pin__);
+                }
+            }
+        }
+
+        black_box_components_.erase(component_item);
     }
 
+
+    // =========
+    // WIRING
+    // =========
+
     void onWireCreateRequest(WireEndPoint *point1, WireEndPoint *point2) {
-        addWire({point1, point2});
+        auto *pin_item1 = dynamic_cast<PinItem *>(point1);
+        auto *pin_item2 = dynamic_cast<PinItem *>(point2);
+
+        if (pin_item1) my_assert(pins_.contains(pin_item1));
+        if (pin_item2) my_assert(pins_.contains(pin_item2));
+
+        std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin>> logic_pins{};
+
+        if (pin_item1) logic_pins.insert(pins_.at(pin_item1));
+        if (pin_item2) logic_pins.insert(pins_.at(pin_item2));
+
+        auto *wire_item = ui_controller_.createWire(point1, point2);
+        main_view_->scene()->addItem(wire_item);
+        std::weak_ptr<LogicWire> logic_wire{};
+
+        if (logic_pins.size() != 0) {
+            logic_wire = logic_controller_.createWire(logic_pins, wire_item);
+        }
+
+        wires_.insert({wire_item, logic_wire});
     }
-    void onAddPinToWireRequest(WireItem *wire_item, PinItem *pin_item) const {
-        addPinToWire(wire_item, pin_item);
+    void onAddPinToWireRequest(WireItem *wire_item, WireEndPoint *from, PinItem *pin_item) {
+        my_assert(wires_.contains(wire_item));
+        my_assert(pins_.contains(pin_item));
+        my_assert(from->parentWire() == wire_item);
+        my_assert(wire_item->end_points_size() > 1); // else somewhere we have miss delete empty(size < 2) wire
+
+        auto &logic_wire = wires_.at(wire_item);
+        auto logic_pin = pins_.at(pin_item);
+
+        if (logic_wire.expired())
+            logic_wire = logic_controller_.createWire({logic_pin}, wire_item);
+        else
+            logic_controller_.connectPin(logic_wire, logic_pin);
+
+        ui_controller_.connectPinToWire(wire_item, from, pin_item);
     }
     void onRemovePinFromWireRequest(WireItem *wire_item, PinItem *pin_item) {
-        removePinFromWire(wire_item, pin_item);
+        my_assert(wires_.contains(wire_item));
+        my_assert(pins_.contains(pin_item));
+        my_assert(wire_item->end_points_size() > 1); // else somewhere we have miss delete empty(size < 2) wire
+
+        // LOGIC
+
+        auto logic_wire = wires_.at(wire_item);
+        my_assert(!logic_wire.expired()); // cant remove pin from non-exists logic wire
+        auto logic_pin = pins_.at(pin_item);
+        my_assert(!logic_pin.expired());
+
+        logic_controller_.disconnectPin(logic_wire, logic_pin);
+
+        // UI
+
+        if (ui_controller_.disconnectPinFromWire(wire_item, pin_item)) {
+            // wire_item is invalid
+            wires_.erase(wire_item);
+        }
     }
-    void onUniteWireRequest(WireItem *wire_item_from, WireItem *wire_item_to, WireNode *line_from, WireNode *line_to) {
-        uniteWire(wire_item_from, wire_item_to, line_from, line_to);
+    void onCreateNodeInLine(WireLine *line_item, QPointF pos) {
+        ui_controller_.divideLineInNode(line_item, pos);
     }
+    void onCreateLineToEndPoint(WireItem *wire_item, WireEndPoint *from, WireEndPoint *to) {
+        ui_controller_.createLine(wire_item, from, to);
+    }
+    void onCreateLineToPos(WireItem *wire_item, WireEndPoint *from, QPointF pos, WireNode *&new_node) {
+        new_node = ui_controller_.createNode(wire_item, from, pos);
+    }
+    void onCollapseNode(WireItem *wire_item, WireNode *node) {
+        ui_controller_.collapseNode(wire_item, node);
+    }
+    void onDivideWireInNode(WireItem *wire_item, WireNode *node) {
+        auto res = ui_controller_.divideWireInNode(wire_item, node);
+        std::unordered_set<PinItem *> disconnected_pins = res.disconnected_pins;
+        std::unordered_set<WireItem *> new_wire_items = res.new_wires;
+
+        // in ui already all divided
+
+        // reconnect pins
+        for (auto *new_wire_item : new_wire_items) {
+            std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin>> logic_pins{};
+
+            for (auto *pin_item : new_wire_item->pins()) {
+                auto logic_pin__ = pins_.at(pin_item);
+
+                // disconnect logic pin
+                wires_.at(wire_item).lock()->removePin(logic_pin__);
+                logic_pin__.lock()->removeWire();
+
+                logic_pins.insert(logic_pin__);
+            }
+
+            // create new logic wire with pins
+            std::weak_ptr<LogicWire> logic_wire{};
+            if (logic_pins.size() > 0)
+                logic_wire = logic_controller_.createWire(logic_pins, new_wire_item);
+
+            wires_.insert({new_wire_item, logic_wire});
+        }
+
+        // disconnect pins
+        for (auto *pin_item : disconnected_pins) {
+            auto logic_pin__ = pins_.at(pin_item);
+
+            logic_pin__.lock()->wire().lock()->removePin(logic_pin__);
+            logic_pin__.lock()->removeWire();
+        }
+
+        // delete source wire if it is
+        if (res.is_source_wire_deleted) {
+            delete wire_item;
+            // logic wire already reconnected/disconnected
+
+            wires_.erase(wire_item);
+        }
+    }
+    void onUniteWire(WireItem *first, WireItem *second, WireNode *from, WireNode *to) {
+        my_assert(wires_.contains(first));
+        my_assert(wires_.contains(second));
+        my_assert(first != second);
+
+        // NOTE: first in logic and first in ui must be same. it is need for successful signalConsumer unite
+
+        if (wires_.at(first).expired() && !wires_.at(second).expired()) {
+            // we move logic_wire from second to first recording
+            wires_[first] = wires_[second];
+            wires_[first].lock()->setSignalConsumer(first);
+        } else if (!wires_.at(first).expired() && wires_.at(second).expired()) {
+            // we don`t do anything
+        } else if (wires_.at(first).expired() && wires_.at(second).expired()) {
+            // we don`t do anything
+        } else {
+            // we unite logic
+            logic_controller_.uniteWire(wires_.at(first), wires_.at(second));
+        }
+
+        ui_controller_.uniteWire(first, second, from, to);
+
+        wires_.erase(second);
+    }
+
+    // ========
+    // DRILLING
+    // ========
 
     void onDrillDownRequest(QGraphicsScene *scene) const {
         main_view_->setScene(scene);
@@ -104,150 +280,16 @@ public slots:
     }
 
 public:
-    Controller() : main_view_(new MainView(new QGraphicsScene())), input_mapper_(new InputMapper(main_view_->scene(), this)) {
+    Controller() : main_view_(new MainView(new QGraphicsScene())), input_mapper_(new InputMapper(main_view_->scene(), this)), ui_controller_(main_view_->scene()) {
         initConnects();
     }
 
-    MainView *mainView() const {
-        return main_view_;
-    }
-
-    InputMapper *inputMapper() const {
+    InputMapper *input_mapper() const {
         return input_mapper_;
     }
 
-    void addWire(const std::vector<WireEndPoint *> &point_items) {
-        // need 2 pins to connect
-        my_assert(point_items.size() >= 2);
-
-        // cant connect already connected pins
-        for (const auto point : point_items) {
-            if (point->lines().size()) {
-                qDebug() << "pin already has a wire";
-                return;
-            }
-        }
-
-        // cant connect the same pins
-        if (const std::unordered_set<WireEndPoint*> temp_map{point_items.begin(),point_items.end()};  point_items.size() != temp_map.size()) {
-            qDebug() << "cant connect the same pins";
-            return;
-        }
-
-        // LOGIC: get logic pins and create a wire and set pins for wire & set wire for pins
-        // UI: set 2 pins in WireItem constructor, other in cycle
-        // no recordings
-
-        // temp hook for addPinToWire
-        auto logic_wire = std::make_shared<LogicWire>();
-
-        auto *wire_item = new WireItem{point_items[0], point_items[1], logic_wire};
-        main_view_->scene()->addItem(wire_item);
-
-        logic_wire->setSignalConsumer(wire_item);
-
-        std::vector<std::weak_ptr<LogicPin>> logic_pins{};
-        std::vector<PinItem *> pin_items{};
-
-        for (auto *point_item : point_items) {
-            if (auto *pin_item = dynamic_cast<PinItem *>(point_item)) {
-                logic_pins.push_back(pins_[pin_item]);
-                pin_items.push_back(pin_item);
-            }
-        }
-
-        // add recording
-        wires_.insert({wire_item, logic_wire});
-
-        // set pins for wire & wire for pins at logic-side
-        for (auto *pin_item : pin_items) {
-            addPinToWire(wire_item, pin_item);
-        }
-    }
-    /// just remove recording about it
-    void uniteWire(WireItem *wire_item_from, WireItem *wire_item_to, WireNode *line_from, WireNode *line_to) {
-        my_assert(wires_.contains(wire_item_from));
-        my_assert(wires_.contains(wire_item_to));
-
-        if (auto logic_wire_to = wires_.at(wire_item_to).lock(),
-                logic_wire_from = wires_.at(wire_item_from).lock();
-            logic_wire_to && logic_wire_from
-            ) {
-            logic_wire_to->uniteWire(logic_wire_from);
-        }
-        wire_item_to->uniteWire(wire_item_from, line_from, line_to);
-
-        wires_.erase(wire_item_from);
-    }
-
-    void addPinToWire(WireItem *wire_item, PinItem* pin_item) const {
-        const auto logic_pin = pins_.at(pin_item);
-        const auto logic_wire = wires_.at(wire_item);
-
-        const auto sh_pin = logic_pin.lock();
-        const auto sh_wire = logic_wire.lock();
-
-        if (sh_pin && sh_wire) {
-            sh_pin->setWire(sh_wire);
-            sh_wire->addPin(sh_pin);
-        }
-    }
-    void removePinFromWire(WireItem *wire_item, PinItem* pin_item) {
-        const auto sh_pin =  pins_.at(pin_item).lock();
-        const auto sh_wire = wires_.at(wire_item).lock();
-
-        if (sh_wire && sh_pin) {
-            sh_pin->removeWire();
-            sh_wire->removePin(sh_pin);
-        }
-
-        if (wire_item->removeEndPoint(pin_item))
-            wires_.erase(wire_item);
-    }
-
-    void addComponent(ComponentItem *component_item) {
-        // LOGIC: pins construction is in the component
-        // UI: the same, also add to scene
-        // create recording of component and his pins
-
-        // get logic component from factory (item -> logic)
-        auto logic_component = std::move(logicTypeByItem(component_item));
-        if (logic_component == nullptr) return; // undefined item
-
-        main_view_->scene()->addItem(component_item);
-
-        // add recordings & add pins to scene
-        for (int i = 0; i < component_item->pins().size(); i++) {
-            auto *pin_item = component_item->pins()[i];
-            auto logic_pin = logic_component->pins()[i];
-
-            pins_[pin_item] = logic_pin;
-        }
-
-        // create recording in bb_components
-        black_box_components_[component_item] = std::move(logic_component);
-    }
-
-    void removeComponent(ComponentItem *component_item) {
-        // LOGIC: shared ptr of logic component has only 1 hook in controller.
-        // after hook reset component will call pins destructors
-        // and them will reset theirs shared ptrs of wires (NOTE: wire delete died ptrs on pins before each handle)
-        // UI: just delete component_item. after that it will call destructors of pins and them will remove pin from their wires
-        // also remove recordings of component and pins
-
-        // reset hook on logic_component
-        black_box_components_.extract(component_item).mapped().reset();
-
-        // remove item_pins
-        for (auto *pin : component_item->pins()) {
-            if (pin->parentWire())
-                removePinFromWire(pin->parentWire(), pin);
-
-            pins_.erase(pin);
-        }
-
-
-        delete component_item;
+    QGraphicsView *view() const {
+        return main_view_;
     }
 
     ~Controller() override {

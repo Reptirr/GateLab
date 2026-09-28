@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <LogicWire.h>
 #include <LogicPin.h>
+#include <my_assert.h>
 #include <WireItem.h>
 
 
@@ -69,7 +70,13 @@ void LogicWire::addPin(const std::weak_ptr<LogicPin> &pin) {
     handle();
 }
 
-void LogicWire::removePin(const std::weak_ptr<LogicPin> &pin) {
+void LogicWire::removePin(std::weak_ptr<LogicPin> pin) {
+    my_assert(!pin.expired());
+
     pins_.erase(pin);
     handle();
+}
+
+std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin> > LogicWire::pins() {
+    return pins_;
 }

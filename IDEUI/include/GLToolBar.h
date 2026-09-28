@@ -4,10 +4,10 @@
 #include <QToolBar>
 #include <QActionGroup>
 
-class GLToolBar : public QToolBar {
+class GLModeToolBar : public QToolBar {
     Q_OBJECT
 public:
-    explicit GLToolBar(QWidget *parent = nullptr) : QToolBar("Modes", parent) {
+    explicit GLModeToolBar(QWidget *parent = nullptr) : QToolBar("Modes", parent) {
         auto *actionGroup = new QActionGroup(this);
         actionGroup->setExclusive(true);
 

@@ -51,6 +51,10 @@ void MainView::mouseMoveEvent(QMouseEvent *event) {
     emit mouseMove(event->clone());
 }
 
+void MainView::mouseReleaseEvent(QMouseEvent *event) {
+    emit mouseRelease(event);
+}
+
 void MainView::resizeEvent(QResizeEvent *event) {
     QGraphicsView::resizeEvent(event);
 
@@ -61,7 +65,9 @@ void MainView::resizeEvent(QResizeEvent *event) {
 MainView::MainView(QGraphicsScene *main_scene) {
     _main_scene = main_scene;
 
-    setRenderHints({QPainter::Antialiasing, QPainter::TextAntialiasing});
+    setRenderHints({QPainter::TextAntialiasing});
+    setViewportUpdateMode(BoundingRectViewportUpdate);
+
     viewport()->setAttribute(Qt::WA_AcceptTouchEvents, false);
 
     setScene(_main_scene);

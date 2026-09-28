@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.2.)
+cmake_minimum_required(VERSION 3.20...4.3)
 project(GateLab)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -6,9 +6,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_PREFIX_PATH "D:/Program Files/Qt/6.11.0/mingw_64")
+if (NOT CMAKE_PREFIX_PATH)
+    message(WARNING "no cmake_prefix_path. set it for qt 6.5 path")
+endif()
 
-find_package(Qt6 COMPONENTS
+find_package(Qt6 6.4.2 COMPONENTS
         Core
         Gui
         Widgets
@@ -47,6 +49,8 @@ add_library(GateLabCore STATIC
         MultiScheme/include/MoveHelper.h
         GateLogic/include/instant/LogicNTransistor.h
         MultiScheme/include/instant/NTransistorItem.h
+        Controller/include/LogicController.h
+        Controller/include/UIController.h
 )
 
 target_link_libraries(GateLabCore PUBLIC

@@ -2,6 +2,7 @@
 
 #include <QGraphicsItem>
 #include <WireItem.h>
+#include <unordered_set>
 
 class WireLine;
 

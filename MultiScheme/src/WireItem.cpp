@@ -3,41 +3,18 @@
 #include <WireItem.h>
 
 #include <PinItem.h>
+#include <Utils.h>
 #include <WireEndpoint.h>
 #include <WireLine.h>
 #include <WireNode.h>
 
-void WireItem::setColorBySignal(bool signal = false) {
-    color_ = signal ? QColorConstants::Green : QColorConstants::Black;
-    update();
-}
-
-bool WireItem::notifyEndPointDelete() const {
-    if (end_points_.size() <= 1) {
-        // delete wire if it is only 1 end_point. logic pin is already need be deleted at that moment
-        delete this;
-        return true;
-    }
-
-    return false;
-}
-
-WireItem::WireItem(WireEndPoint *end_point1, WireEndPoint *end_point2, std::shared_ptr<LogicWire> logic_wire) : logic_wire_(logic_wire) {
-    my_assert(end_point1->scene() == end_point2->scene());
-
+WireItem::WireItem(WireEndPoint *point) {
     setZValue(WireZValue);
 
-    end_point1->scene()->addItem(this); // need it because WireLine need be on scene in constructor
-
-    auto *line = new WireLine(end_point1, end_point2, this);
-
-    end_point1->addLine(line);
-    end_point2->addLine(line);
-
-    end_points_.insert({end_point1, end_point2});
-
-    end_point1->scene()->addItem(line);
+    point->setParentWire(this);
+    end_points_.insert(point);
 }
+
 
 void WireItem::divideLine(const WireLine *on_line, const QPointF pos) {
     // slice line to 2 ones and node between they
@@ -80,7 +57,7 @@ bool WireItem::collapseNode(WireNode *node) {
     return true;
 }
 
-bool WireItem::removeEndPoint(WireEndPoint *end_point) {
+void WireItem::removeEndPoint(WireEndPoint *end_point) {
     my_assert(end_points_.contains(end_point));
 
     end_point->clearLines();
@@ -88,12 +65,10 @@ bool WireItem::removeEndPoint(WireEndPoint *end_point) {
     end_points_.erase(end_point);
 
     end_point->disconnect();
-
-    return notifyEndPointDelete();
 }
 
 void WireItem::createLine(WireEndPoint *from, WireEndPoint *to) {
-    // my_assert(end_points_.contains(from) && !end_points_.contains(to));
+    my_assert(end_points_.contains(from) && !end_points_.contains(to));
 
     end_points_.insert(to);
 
@@ -101,19 +76,29 @@ void WireItem::createLine(WireEndPoint *from, WireEndPoint *to) {
 
     from->addLine(line);
     to->addLine(line);
+
+    from->setParentWire(this);
+    to->setParentWire(this);
+
+    if (instanceOfWireNode(from)) from->setParentItem(this);
+    if (instanceOfWireNode(to)) to->setParentItem(this);
 }
 
 std::unordered_set<WireEndPoint *> WireItem::uniteWire(WireItem *wire_item, WireNode *line_from, WireNode *line_to) {
     my_assert(wire_item != this);
-    my_assert(wire_item->end_points_.contains(line_from)); // other wire contains node from we create connection
-    my_assert(end_points_.contains(line_to)); // we contains node to we create connection
+    my_assert(end_points_.contains(line_from)); // other wire contains node from we create connection
+    my_assert(wire_item->end_points_.contains(line_to)); // we contains node to we create connection
 
     // gets points from arg wire, insert to our and create line between nodes from args
+
+    // create line
+    createLine(line_from, line_to);
 
     std::unordered_set<WireEndPoint *> new_end_points{wire_item->end_points_.begin(), wire_item->end_points_.end()};
     for (auto *new_end_point : new_end_points) {
         new_end_point->setParentWire(this);
-        if (!dynamic_cast<PinItem *>(new_end_point)) // we change ownership only for nodes and lines
+
+        if (!instanceOfPinItem(new_end_point)) // we change ownership only for nodes and lines
             new_end_point->setParentItem(this);
 
         for (auto *line : new_end_point->lines()) {
@@ -127,25 +112,147 @@ std::unordered_set<WireEndPoint *> WireItem::uniteWire(WireItem *wire_item, Wire
     wire_item->end_points_.clear();
     delete wire_item;
 
-    // create line
-    createLine(line_from, line_to);
-
     return new_end_points;
+}
+
+void process_point(WireLine *previous_line, WireEndPoint *point, std::unordered_set<WireEndPoint *> &new_points) {
+    if (instanceOfPinItem(point)) new_points.insert(point);
+    else /* WireNode */ {
+        new_points.insert(point);
+
+        for (auto *line : point->lines()) {
+            if (line == previous_line) continue;
+
+            auto next_point = line->to() == point ? line->from() : line->to();
+            process_point(line, next_point, new_points);
+        }
+    }
+}
+
+WireDivideResult WireItem::divideWireIn(WireNode *node) {
+    my_assert(contains(node));
+
+    std::vector< std::unordered_set<WireEndPoint *> > other_points{};
+    std::unordered_set<WireEndPoint *> our_points{};
+
+    // one of line is our wire, other is new wires
+    // node will delete
+
+    int i = 0;
+    for (auto *line : node->lines()) {
+        auto next_point = line->to() == node ? line->from() : line->to();
+
+        if (i == 0) {
+            process_point(line, next_point, our_points);
+        } else {
+            other_points.emplace_back();
+
+            process_point(line, next_point, other_points[i-1]);
+        }
+
+        // also remove line-connection
+        next_point->removeLine(line);
+        node->removeLine(line);
+        delete line;
+
+        i++;
+    }
+
+    end_points_.erase(node);
+    delete node; // node must be has no recordings about neighbours & lines have no recordings about node
+
+    WireDivideResult res{};
+
+    // check is our wire is useless
+    if (our_points.size() < 2) {
+        auto *point = *our_points.begin();
+
+        if (auto *pin = instanceOfPinItem(point)) {
+            res.disconnected_pins.insert(pin);
+        } else /* WireNode */ {
+            my_assert(point->lines().size() == 0); // we already remove line on node deleting
+
+            end_points_.erase(point);
+            our_points.erase(point);
+
+            delete point;
+        }
+
+        // set flag of are we deleted
+        res.is_source_wire_deleted = true;
+    }
+
+    // we have sets of new wires
+    for (auto points_set : other_points) {
+        // delete useless wires in new
+        if (points_set.size() < 2) {
+            if (auto *pin = instanceOfPinItem(*points_set.begin())) {
+                res.disconnected_pins.insert(pin);
+            }
+            else {
+                auto *point = *points_set.begin();
+
+                // we already remove line to it. we just delete it
+
+                end_points_.erase(point);
+                delete point;
+            }
+
+            continue;
+        }
+
+
+        auto *new_wire = new WireItem(*points_set.begin());
+        scene()->addItem(new_wire);
+        res.new_wires.insert(new_wire);
+
+        for (auto *point : points_set) {
+            for (auto *line : point->lines()) {
+                line->setParentWire(new_wire);
+                line->setParentItem(new_wire);
+            }
+
+            if (instanceOfWireNode(point)) {
+                point->setParentWire(new_wire);
+                point->setParentItem(new_wire);
+            }
+
+            end_points_.erase(point);
+            new_wire->end_points_.insert(point);
+        }
+    }
+
+    end_points_ = our_points;
+
+    return res;
+}
+
+bool WireItem::contains(WireEndPoint *end_point) const {
+    return end_points_.contains(end_point);
+}
+
+void WireItem::setColorBySignal(bool signal = false) {
+    color_ = signal ? QColorConstants::Green : QColorConstants::Black;
+    update();
 }
 
 QColor WireItem::color() const {
     return color_;
 }
 
-bool WireItem::empty() const {
-    if (end_points_.size() == 0) return true;
-    if (end_points_.size() > 1) return false;
+int WireItem::end_points_size() const {
+    return end_points_.size();
+}
 
-    auto *end_point = *end_points_.begin();
-    if (auto pin = dynamic_cast<PinItem *>(end_point)) {
-        return false;
+std::unordered_set<PinItem *> WireItem::pins() const {
+    std::unordered_set<PinItem *> res{};
+
+    for (auto *point : end_points_) {
+        if (auto *pin = instanceOfPinItem(point))
+            res.insert(pin);
     }
-    return true;
+
+    return res;
 }
 
 QRectF WireItem::boundingRect() const {
@@ -168,6 +275,4 @@ WireItem::~WireItem() {
             delete end_point;
         }
     }
-
-    if (logic_wire_) logic_wire_->setSignalConsumer(nullptr);
 }

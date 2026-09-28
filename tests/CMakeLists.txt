@@ -50,5 +50,4 @@ endif ()
 include(GoogleTest)
 gtest_discover_tests(GateLab_tests
         PROPERTIES
-        ENVIRONMENT "PATH=D:/Program Files/Qt/6.11.0/mingw_64/bin;D:/Program Files/JetBrains/CLion 2026.2.0.1/bin/mingw/bin;$ENV{PATH}"
 )

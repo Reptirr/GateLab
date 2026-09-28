@@ -14,9 +14,14 @@ class PinItem : public WireEndPoint {
 
     WireLine *conn_{};
 
+    QPen pen_;
+
 public:
     explicit PinItem(QGraphicsItem* parent) : WireEndPoint(parent) {
         setParentItem(parent);
+
+        pen_ = (QColorConstants::Black);
+        pen_.setWidth(3);
     }
 
 
@@ -55,15 +60,17 @@ public:
         if (conn_) conn_->rebuild();
     }
 
-    QRectF boundingRect() const override {
+    QRectF rect() const {
         return QRectF{0, 0, width_, height_};
     }
 
+    QRectF boundingRect() const override {
+        const qreal margin = pen_.widthF() / 2.0 + 1.0;
+        return QRectF{0, 0, width_, height_}.adjusted(-margin, -margin, margin, margin);
+    }
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override {
-        // make a border
-        QPen pen(QColorConstants::Black);
-        pen.setWidth(3);
-        painter->setPen(pen);
+        painter->setPen(pen_);
 
         painter->drawRect(0, 0, width_, height_);
     }

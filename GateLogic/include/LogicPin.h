@@ -14,23 +14,23 @@ class LogicPin : public std::enable_shared_from_this<LogicPin> {
     // pin can has connection:
     // wire - pin - transistor
 
-    std::weak_ptr<LogicComponent> owner_; // only for component
-    std::shared_ptr<LogicWire> conn_; // only for wire; deletes itself
+    std::weak_ptr<LogicComponent> owner_{}; // only for component
+    std::shared_ptr<LogicWire> conn_{}; // only for wire; deletes itself
 
 public:
     explicit LogicPin(const std::weak_ptr<LogicComponent> &owner);
 
-    bool getSignal() const;
-
+    bool signal() const;
     bool ownSignal() const;
 
     void setSignalByWire(bool);
-
     void setSignalByOwner(bool);
 
-    void setWire(const std::shared_ptr<LogicWire> &external);
-
+    void setWire(std::shared_ptr<LogicWire> external);
     void removeWire();
+
+    std::weak_ptr<LogicWire> wire();
+    std::weak_ptr<LogicComponent> owner();
 
     ~LogicPin();
 };

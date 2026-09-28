@@ -24,5 +24,7 @@ public:
     std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin>> uniteWire(std::shared_ptr<LogicWire> &logic_wire);
 
     void addPin(const std::weak_ptr<LogicPin> &pin);
-    void removePin(const std::weak_ptr<LogicPin> &pin);
+    void removePin(std::weak_ptr<LogicPin> pin);
+
+    std::set<std::weak_ptr<LogicPin>, WeakPtrComparator<LogicPin>> pins();
 };
