@@ -1,5 +1,4 @@
 #include <qgraphicssceneevent.h>
-#include <QPainter>
 #include <WireLine.h>
 #include <WireNode.h>
 #include <QPolygonF>
@@ -43,7 +42,6 @@ void WireNode::clearLines() {
 
 void WireNode::disconnect() {
     wire_item_ = nullptr;
-    delete this;
 }
 
 void WireNode::move(const QPointF pos) {

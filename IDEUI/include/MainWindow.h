@@ -9,16 +9,16 @@ class MainWindow : public QMainWindow {
     Controller controller_;
 
     // internals
-    GLToolBar *toolbar_;
+    GLModeToolBar *toolbar_;
 
     void initConnects() {
         // GLToolBar -> InputMapper
-        connect(toolbar_, &GLToolBar::modeChange,
+        connect(toolbar_, &GLModeToolBar::modeChange,
                 controller_.input_mapper(), &InputMapper::onModeChange);
     }
 
 public:
-    MainWindow() : toolbar_(new GLToolBar{this}) {
+    MainWindow() : toolbar_(new GLModeToolBar{this}) {
         // toolbar
         addToolBar(toolbar_);
 

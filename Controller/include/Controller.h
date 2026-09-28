@@ -158,8 +158,9 @@ public slots:
 
         if (logic_wire.expired())
             logic_wire = logic_controller_.createWire({logic_pin}, wire_item);
+        else
+            logic_controller_.connectPin(logic_wire, logic_pin);
 
-        logic_controller_.connectPin(logic_wire, logic_pin);
         ui_controller_.connectPinToWire(wire_item, from, pin_item);
     }
     void onRemovePinFromWireRequest(WireItem *wire_item, PinItem *pin_item) {
@@ -241,12 +242,28 @@ public slots:
         }
     }
     void onUniteWire(WireItem *first, WireItem *second, WireNode *from, WireNode *to) {
+        my_assert(wires_.contains(first));
+        my_assert(wires_.contains(second));
+        my_assert(first != second);
+
         // NOTE: first in logic and first in ui must be same. it is need for successful signalConsumer unite
 
-        logic_controller_.uniteWire(wires_.at(first), wires_.at(second));
-        // second logic_wire is invalid
+        if (wires_.at(first).expired() && !wires_.at(second).expired()) {
+            // we move logic_wire from second to first recording
+            wires_[first] = wires_[second];
+            wires_[first].lock()->setSignalConsumer(first);
+        } else if (!wires_.at(first).expired() && wires_.at(second).expired()) {
+            // we don`t do anything
+        } else if (wires_.at(first).expired() && wires_.at(second).expired()) {
+            // we don`t do anything
+        } else {
+            // we unite logic
+            logic_controller_.uniteWire(wires_.at(first), wires_.at(second));
+        }
 
         ui_controller_.uniteWire(first, second, from, to);
+
+        wires_.erase(second);
     }
 
     // ========

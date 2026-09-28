@@ -207,6 +207,7 @@ void InputMapper::onModeChange(const EditMode mode) {
     mode_.emplaceByEnum(mode);
 }
 
+
 void InputMapper::setScene(QGraphicsScene *scene) {
     scene_ = scene;
 }

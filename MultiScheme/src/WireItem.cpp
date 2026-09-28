@@ -192,8 +192,7 @@ WireDivideResult WireItem::divideWireIn(WireNode *node) {
             else {
                 auto *point = *points_set.begin();
 
-                point->clearLines();
-                point->disconnect();
+                // we already remove line to it. we just delete it
 
                 end_points_.erase(point);
                 delete point;

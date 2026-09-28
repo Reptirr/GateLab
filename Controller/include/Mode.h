@@ -8,6 +8,12 @@ enum class EditMode {
 
 Q_DECLARE_METATYPE(EditMode)
 
+enum class ComponentType {
+    Transistor,
+    NTransistor,
+    Source
+};
+
 struct WireCreating  {
     // for logic create
     WireItem *wire_item{};
@@ -33,7 +39,7 @@ struct WireCreating  {
 };
 
 struct ComponentEdit  {
-
+    ComponentType to_create{};
 };
 
 
