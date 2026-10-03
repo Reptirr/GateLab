@@ -80,6 +80,7 @@ public:
     WireItem *createWire(WireEndPoint *point1, WireEndPoint *point2) const {
         auto *wire = new WireItem(point1);
         wire->createLine(point1, point2);
+        scene_->addItem(wire);
 
         return  wire;
     }

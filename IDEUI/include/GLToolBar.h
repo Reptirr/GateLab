@@ -13,7 +13,7 @@ public:
 
         setToolButtonStyle(Qt::ToolButtonTextUnderIcon); // text under icon in each action
 
-        auto addModeAction = [&] (const QString& title, EditMode mode, const bool checked = false) {
+        auto addModeAction = [&] (const QString& title, ModeType mode, const bool checked = false) {
             auto *action = new QAction{title, this};
             action->setCheckable(true);
             action->setChecked(checked);
@@ -24,8 +24,8 @@ public:
             return action;
         };
 
-        auto component_edit = addModeAction("Component editing", EditMode::COMPONENT_EDIT, true);
-        auto wire_create = addModeAction("Wire create", EditMode::WIRE_CREATING);
+        auto component_edit = addModeAction("Component editing", ModeType::COMPONENTS, true);
+        auto wire_create = addModeAction("Wire create", ModeType::WIRES);
 
         component_edit->setShortcuts({
             {Qt::Key_C},
@@ -38,11 +38,11 @@ public:
 
         connect(actionGroup, &QActionGroup::triggered,
                 this, [&](const QAction *action) {
-                    const EditMode edit_mode = action->data().value<EditMode>();
+                    const ModeType edit_mode = action->data().value<ModeType>();
                     emit modeChange(edit_mode);
                 });
     }
 
 signals:
-    void modeChange(EditMode mode);
+    void modeChange(ModeType mode);
 };

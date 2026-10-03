@@ -40,48 +40,12 @@ class LogicPin;
 class Controller : public QObject {
     Q_OBJECT
 
-    MainView *main_view_{};
-    InputMapper *input_mapper_;
-
     std::unordered_map<PinItem*, std::weak_ptr<LogicPin>> pins_;
     std::unordered_map<WireItem*, std::weak_ptr<LogicWire>> wires_;
-    std::unordered_map<ComponentItem*, std::weak_ptr<LogicComponent>> black_box_components_; // for component removing
+    std::unordered_map<ComponentItem*, std::weak_ptr<LogicComponent>> black_box_components_;
 
     UIController ui_controller_;
     LogicController logic_controller_{};
-
-    void initConnects() {
-        // MainView -> InputMapper
-        connect(main_view_, &MainView::keyPress,
-                input_mapper_, &InputMapper::onKeyPress);
-        connect(main_view_, &MainView::mouseDoubleClick,
-                input_mapper_, &InputMapper::onMouseDoubleClick);
-        connect(main_view_, &MainView::mouseMove,
-                input_mapper_, &InputMapper::onMouseMove);
-        connect(main_view_, &MainView::mousePress,
-                input_mapper_, &InputMapper::onMousePress);
-        connect(main_view_, &MainView::mouseRelease,
-                input_mapper_, &InputMapper::onMouseRelease);
-
-#define CONNECT_MAPPER_CONTROLLER(signal, slot) \
-    connect(input_mapper_, signal, \
-            this, slot)
-
-        // InputMapper -> Controller
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::drillDownRequest,          &Controller::onDrillDownRequest);          // drill-down
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::drillUpRequest,            &Controller::onDrillUpRequest);            // drill-up
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::addPinToWireRequest,       &Controller::onAddPinToWireRequest);       // pin-add
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::removePinFromWireRequest,  &Controller::onRemovePinFromWireRequest);  // pin-remove
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::componentRemoveRequest,    &Controller::onComponentRemoveRequest);    // component-delete
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::componentCreateRequest,    &Controller::onComponentCreateRequest);    // component-create
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::wireCreateRequest,         &Controller::onWireCreateRequest);         // wire-create
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::createNodeRequest,         &Controller::onCreateLineToPos);           // wire-node-at-pos-create
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::uniteWireRequest,          &Controller::onUniteWire);                 // wire-unite
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::collapseNode,              &Controller::onCollapseNode);              // wire-node-collapse
-        CONNECT_MAPPER_CONTROLLER(&InputMapper::divideWireInNode,          &Controller::onDivideWireInNode);          // wire-divide
-
-#undef CONNECT_MAPPER_CONTROLLER
-    }
 
 public slots:
     void onComponentCreateRequest(ComponentItem *component_item) {
@@ -138,7 +102,6 @@ public slots:
         if (pin_item2) logic_pins.insert(pins_.at(pin_item2));
 
         auto *wire_item = ui_controller_.createWire(point1, point2);
-        main_view_->scene()->addItem(wire_item);
         std::weak_ptr<LogicWire> logic_wire{};
 
         if (logic_pins.size() != 0) {
@@ -266,33 +229,9 @@ public slots:
         wires_.erase(second);
     }
 
-    // ========
-    // DRILLING
-    // ========
-
-    void onDrillDownRequest(QGraphicsScene *scene) const {
-        main_view_->setScene(scene);
-        input_mapper_->setScene(scene);
-    }
-    void onDrillUpRequest(QGraphicsScene *scene) const {
-        main_view_->setScene(scene);
-        input_mapper_->setScene(scene);
-    }
 
 public:
-    Controller() : main_view_(new MainView(new QGraphicsScene())), input_mapper_(new InputMapper(main_view_->scene(), this)), ui_controller_(main_view_->scene()) {
-        initConnects();
-    }
+    explicit Controller(QGraphicsScene *scene) : ui_controller_(scene) {
 
-    InputMapper *input_mapper() const {
-        return input_mapper_;
-    }
-
-    QGraphicsView *view() const {
-        return main_view_;
-    }
-
-    ~Controller() override {
-        delete input_mapper_;
     }
 };

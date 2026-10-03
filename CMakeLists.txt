@@ -17,40 +17,43 @@ find_package(Qt6 6.4.2 COMPONENTS
         REQUIRED)
 
 add_library(GateLabCore STATIC
-        MultiScheme/include/MainView.h
-        MultiScheme/src/MainView.cpp
-        MultiScheme/include/PinItem.h
-        Controller/include/BiMap.h
-        Controller/include/Controller.h
-        GateLogic/include/LogicPin.h
-        GateLogic/include/LogicWire.h
-        GateLogic/src/LogicPin.cpp
-        GateLogic/src/LogicWire.cpp
-        MultiScheme/include/ComponentItem.h
-        MultiScheme/include/WireItem.h
-        Controller/src/InputMapper.cpp
-        Controller/include/InputMapper.h
-        MultiScheme/include/UIConstants.h
-        GateLogic/include/instant/LogicSource.h
-        MultiScheme/include/instant/SourceItem.h
-        MultiScheme/src/WireItem.cpp
-        Controller/include/LogicComponentsFactory.h
-        GateLogic/include/LogicUtils.h
-        Controller/include/Mode.h
+        GLCore/MultiScheme/include/MainView.h
+        GLCore/MultiScheme/src/MainView.cpp
+        GLCore/MultiScheme/include/PinItem.h
+        GLCore/Controller/include/Controller.h
+        GLCore/GateLogic/include/LogicPin.h
+        GLCore/GateLogic/include/LogicWire.h
+        GLCore/GateLogic/src/LogicPin.cpp
+        GLCore/GateLogic/src/LogicWire.cpp
+        GLCore/MultiScheme/include/ComponentItem.h
+        GLCore/MultiScheme/include/WireItem.h
+        GLCore/Controller/src/InputMapper.cpp
+        GLCore/Controller/include/InputMapper.h
+        GLCore/MultiScheme/include/UIConstants.h
+        GLCore/GateLogic/include/instant/LogicSource.h
+        GLCore/MultiScheme/include/instant/SourceItem.h
+        GLCore/MultiScheme/src/WireItem.cpp
+        GLCore/Controller/include/LogicComponentsFactory.h
+        GLCore/GateLogic/include/LogicUtils.h
+        GLCore/Controller/include/Mode.h
         IDEUI/include/GLToolBar.h
         IDEUI/include/MainWindow.h
-        MultiScheme/include/WireLine.h
-        MultiScheme/include/WireNode.h
-        MultiScheme/include/WireEndpoint.h
-        MultiScheme/src/WireNode.cpp
-        MultiScheme/src/WireLine.cpp
-        MultiScheme/include/Utils.h
+        GLCore/MultiScheme/include/WireLine.h
+        GLCore/MultiScheme/include/WireNode.h
+        GLCore/MultiScheme/include/WireEndpoint.h
+        GLCore/MultiScheme/src/WireNode.cpp
+        GLCore/MultiScheme/src/WireLine.cpp
+        GLCore/MultiScheme/include/Utils.h
         my_assert.h
-        MultiScheme/include/MoveHelper.h
-        GateLogic/include/instant/LogicNTransistor.h
-        MultiScheme/include/instant/NTransistorItem.h
-        Controller/include/LogicController.h
-        Controller/include/UIController.h
+        GLCore/MultiScheme/include/MoveHelper.h
+        GLCore/GateLogic/include/instant/LogicNTransistor.h
+        GLCore/MultiScheme/include/instant/NTransistorItem.h
+        GLCore/Controller/include/LogicController.h
+        GLCore/Controller/include/UIController.h
+        GLCore/Commands/include/ComponentCommands.h
+        GLCore/Commands/include/GLCommand.h
+        GLCore/Controller/include/ModeManager.h
+        GLCore/Controller/include/GLCore.h
 )
 
 target_link_libraries(GateLabCore PUBLIC
@@ -60,10 +63,11 @@ target_link_libraries(GateLabCore PUBLIC
 )
 
 target_include_directories(GateLabCore PUBLIC
-        MultiScheme/include
-        GateLogic/include
-        Controller/include
+        GLCore/MultiScheme/include
+        GLCore/GateLogic/include
+        GLCore/Controller/include
         IDEUI/include
+        GLCore/Commands/include
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

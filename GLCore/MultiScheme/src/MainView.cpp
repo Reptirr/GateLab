@@ -2,25 +2,6 @@
 #include <QMouseEvent>
 
 
-void MainView::drill_down(ComponentItem *scheme) {
-
-    if (scheme->interior()) {
-        qDebug() << "make drill down";
-        // push it to stack for drill_up in future
-        _drill_stack.push(scene());
-
-        setScene(scheme->interior());
-    }
-}
-
-void MainView::drill_up() {
-    if (!_drill_stack.empty()) {
-        qDebug() << "make drill up";
-        setScene(_drill_stack.top());
-        _drill_stack.pop();
-    }
-}
-
 QPointF MainView::getCursorPosition() const {
     QPoint viewportPos = viewport()->mapFromGlobal(QCursor::pos());
     QPointF scenePos = mapToScene(viewportPos);
@@ -31,28 +12,31 @@ QPointF MainView::getCursorPosition() const {
 void MainView::mouseDoubleClickEvent(QMouseEvent *event) {
     QGraphicsView::mouseDoubleClickEvent(event);
 
-    qDebug() << "Get double click event";
-
-    emit mouseDoubleClick(event->clone());
+    emit MouseDoubleClick(event);
 }
 
 void MainView::keyPressEvent(QKeyEvent *event) {
     QGraphicsView::keyPressEvent(event);
-    emit keyPress(event->clone(), getCursorPosition());
+    emit KeyPress(event, getCursorPosition());
+}
+
+void MainView::keyReleaseEvent(QKeyEvent *event) {
+    QGraphicsView::keyReleaseEvent(event);
+    emit KeyRelease(event, getCursorPosition());
 }
 
 void MainView::mousePressEvent(QMouseEvent *event) {
     QGraphicsView::mousePressEvent(event);
-    emit mousePress(event->clone());
+    emit MousePress(event);
 }
 
 void MainView::mouseMoveEvent(QMouseEvent *event) {
     QGraphicsView::mouseMoveEvent(event);
-    emit mouseMove(event->clone());
+    emit MouseMove(event);
 }
 
 void MainView::mouseReleaseEvent(QMouseEvent *event) {
-    emit mouseRelease(event);
+    emit MouseRelease(event);
 }
 
 void MainView::resizeEvent(QResizeEvent *event) {
@@ -61,19 +45,17 @@ void MainView::resizeEvent(QResizeEvent *event) {
     scene()->setSceneRect(viewport()->rect());
 }
 
-
-MainView::MainView(QGraphicsScene *main_scene) {
-    _main_scene = main_scene;
-
+MainView::MainView() {
     setRenderHints({QPainter::TextAntialiasing});
     setViewportUpdateMode(BoundingRectViewportUpdate);
 
     viewport()->setAttribute(Qt::WA_AcceptTouchEvents, false);
 
-    setScene(_main_scene);
+    setScene(new QGraphicsScene());
 
     // увеличиваем сцену на весь view
     scene()->setSceneRect(viewport()->rect());
 
     setMouseTracking(true);
+
 }
